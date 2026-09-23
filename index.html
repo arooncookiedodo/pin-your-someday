@@ -154,7 +154,39 @@
   body:not([data-view="about"]) .about-view { display: none; }
 
   /* ---------- About view (intro shown on first visit) ---------- */
-  .about-view { flex: 1; overflow: auto; }
+  .about-view { flex: 1; position: relative; overflow: hidden; background: #141413; }
+  .about-scroll { position: absolute; inset: 0; overflow: auto; z-index: 2; }
+  .about-view .sky {
+    position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+    background:
+      radial-gradient(ellipse 60% 50% at 18% 12%, rgba(217, 119, 87, .26), transparent 70%),
+      radial-gradient(ellipse 55% 45% at 82% 82%, rgba(106, 155, 204, .24), transparent 70%),
+      radial-gradient(ellipse 40% 35% at 72% 18%, rgba(120, 140, 93, .14), transparent 70%),
+      #141413;
+  }
+  .about-view .stars {
+    position: absolute; inset: -240px;
+    background-image:
+      radial-gradient(circle, rgba(250, 249, 245, .95) 0 1px, transparent 1.7px),
+      radial-gradient(circle, rgba(250, 249, 245, .7) 0 .7px, transparent 1.3px);
+    background-size: 190px 190px, 130px 130px;
+    background-position: 0 0, 60px 90px;
+    animation: twinkle 4s ease-in-out infinite alternate;
+  }
+  .about-view .s2 { background-size: 240px 240px, 170px 170px; background-position: 100px 40px, 20px 120px; animation-duration: 6.5s; animation-delay: -2s; }
+  .about-view .s3 { background-size: 95px 95px, 310px 310px; background-position: 30px 70px, 150px 200px; animation-duration: 5.2s; animation-delay: -4s; }
+  @keyframes twinkle { from { opacity: .3; } to { opacity: 1; } }
+  .about-view .spark {
+    position: absolute; width: 6px; height: 6px; border-radius: 50%; background: var(--ivory);
+    box-shadow: 0 0 14px 4px rgba(250, 249, 245, .55);
+    animation: sparkle var(--d, 3.5s) ease-in-out infinite; animation-delay: var(--delay, 0s);
+  }
+  .about-view .spark::before, .about-view .spark::after {
+    content: ""; position: absolute; left: 50%; top: 50%; width: 2px; height: 34px; margin: -17px 0 0 -1px;
+    background: linear-gradient(transparent, rgba(250, 249, 245, .95), transparent);
+  }
+  .about-view .spark::after { transform: rotate(90deg); }
+  @keyframes sparkle { 0%, 100% { transform: scale(.45); opacity: .35; } 50% { transform: scale(1); opacity: 1; } }
   .about-view .page {
     max-width: 820px; margin: 40px auto 60px; padding: 64px 72px;
     line-height: 1.75; word-break: keep-all;
@@ -301,6 +333,15 @@
   }
   .el:hover .resize, .el.selected .resize,
   .heading:hover .resize, .heading.selected .resize { display: block; }
+  .el .rotate {
+    position: absolute; left: 50%; top: -52px; width: 18px; height: 18px; margin-left: -9px; z-index: 3;
+    border-radius: 50%; background: #fff; border: 2px solid var(--orange); cursor: grab; display: none;
+  }
+  .el .rotate::after {          /* little stem down to the card */
+    content: ""; position: absolute; left: 50%; top: 100%; width: 2px; height: 16px; margin-left: -1px;
+    background: var(--orange); opacity: .6;
+  }
+  .el:hover .rotate, .el.selected .rotate { display: block; }
   .heading { cursor: grab; }
   .heading[hidden] { display: none; }
   .heading.dragging { cursor: grabbing; }
@@ -458,12 +499,11 @@
   @keyframes riseIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
 
   /* About: a few polaroids drifting slowly behind the page. */
-  .about-view { position: relative; }
   .about-view .page { position: relative; z-index: 1; }
-  .about-view .floats { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+  .about-view .floats { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 1; }
   .about-view .float {
     position: absolute; width: 130px; height: 158px; padding: 9px 9px 30px; background: #fff;
-    box-shadow: 0 8px 22px rgba(20, 20, 19, .14); opacity: .85;
+    box-shadow: 0 14px 34px rgba(0, 0, 0, .55); opacity: .95;
     transform: rotate(var(--r, 0deg));
     animation: drift var(--d, 14s) ease-in-out infinite alternate;
     animation-delay: var(--delay, 0s);
@@ -473,11 +513,11 @@
     background: var(--tape, var(--orange)); opacity: .78; transform: rotate(-3deg);
   }
   .about-view .float::after { content: ""; display: block; width: 100%; height: 100%; background: var(--g); }
-  .about-view .f1 { left: 4%;  top: 60px;  --r: -6deg; --d: 15s; --tape: var(--orange); --g: linear-gradient(180deg, #F2C4A8 0%, #D97757 55%, #8A4A3A 56%, #5E3A33 100%); }
-  .about-view .f2 { left: 11%; top: 420px; --r: 4deg;  --d: 18s; --delay: -6s; --tape: var(--blue);   --g: linear-gradient(180deg, #CFE0EF 0%, #9DBEDD 45%, #6A9BCC 46%, #3F6E99 100%); }
-  .about-view .f3 { right: 5%; top: 120px; --r: 5deg;  --d: 17s; --delay: -3s; --tape: var(--green);  --g: radial-gradient(ellipse 60% 40% at 30% 100%, #4E5E3B 60%, transparent 61%), radial-gradient(ellipse 55% 45% at 80% 100%, #5F7148 60%, transparent 61%), linear-gradient(180deg, #E4E8D6 0%, #B9C6A0 60%, #788C5D 100%); }
-  .about-view .f4 { right: 12%; top: 520px; --r: -3deg; --d: 16s; --delay: -9s; --tape: var(--orange); --g: linear-gradient(0deg, #C9B89A 0 30%, transparent 30%), linear-gradient(90deg, transparent 38%, #FAF9F5 38% 62%, transparent 62%) 0 0 / 100% 70% no-repeat, linear-gradient(180deg, #F3E3D3, #E8C9AE); }
-  .about-view .f5 { left: 6%;  top: 780px; --r: 3deg;  --d: 19s; --delay: -12s; --tape: var(--blue);  --g: radial-gradient(circle at 75% 30%, #F2E7C9 0 8%, transparent 9%), linear-gradient(180deg, #2A3448, #141413); }
+  .about-view .f1 { left: 4%;  top: 9%;  --r: -6deg; --d: 15s; --tape: var(--orange); --g: linear-gradient(180deg, #F2C4A8 0%, #D97757 55%, #8A4A3A 56%, #5E3A33 100%); }
+  .about-view .f2 { left: 9%;  top: 58%; --r: 4deg;  --d: 18s; --delay: -6s; --tape: var(--blue);   --g: linear-gradient(180deg, #CFE0EF 0%, #9DBEDD 45%, #6A9BCC 46%, #3F6E99 100%); }
+  .about-view .f3 { right: 5%; top: 13%; --r: 5deg;  --d: 17s; --delay: -3s; --tape: var(--green);  --g: radial-gradient(ellipse 60% 40% at 30% 100%, #4E5E3B 60%, transparent 61%), radial-gradient(ellipse 55% 45% at 80% 100%, #5F7148 60%, transparent 61%), linear-gradient(180deg, #E4E8D6 0%, #B9C6A0 60%, #788C5D 100%); }
+  .about-view .f4 { right: 10%; top: 63%; --r: -3deg; --d: 16s; --delay: -9s; --tape: var(--orange); --g: linear-gradient(0deg, #C9B89A 0 30%, transparent 30%), linear-gradient(90deg, transparent 38%, #FAF9F5 38% 62%, transparent 62%) 0 0 / 100% 70% no-repeat, linear-gradient(180deg, #F3E3D3, #E8C9AE); }
+  .about-view .f5 { left: 3%;  top: 36%; --r: 3deg;  --d: 19s; --delay: -12s; --tape: var(--blue);  --g: radial-gradient(circle at 75% 30%, #F2E7C9 0 8%, transparent 9%), linear-gradient(180deg, #2A3448, #141413); }
   @keyframes drift {
     from { transform: translateY(0) rotate(var(--r, 0deg)); }
     to   { transform: translateY(-28px) rotate(calc(var(--r, 0deg) + 3deg)); }
@@ -485,7 +525,8 @@
   @media (max-width: 1100px) { .about-view .floats { display: none; } }
 
   @media (prefers-reduced-motion: reduce) {
-    .el.pin-in, .el.pin-in::before, .board.keep-flash::after, .btn.bump, .dcard, .new-card, .about-view .float {
+    .el.pin-in, .el.pin-in::before, .board.keep-flash::after, .btn.bump, .dcard, .new-card, .about-view .float,
+    .about-view .stars, .about-view .spark {
       animation: none !important;
     }
   }
@@ -576,6 +617,7 @@
     <span class="bar-sep" data-for="card"></span>
     <button id="toFront" data-for="card" data-i18n="toFront" data-i18n-title="toFront">Bring to front</button>
     <button id="toBack" data-for="card" data-i18n="toBack" data-i18n-title="toBack">Send to back</button>
+    <button id="selStraight" data-for="card" data-i18n="straighten" data-i18n-title="straightenHint">Straighten</button>
     <span class="bar-sep" data-for="card"></span>
     <button id="delete" data-for="card" class="danger" data-i18n="del" data-i18n-title="delHint">Delete</button>
     <button id="selHeadEdit" data-for="heading" data-i18n="headEdit" data-i18n-title="headEditHint">Edit text</button>
@@ -619,10 +661,20 @@
 </main>
 
 <main class="about-view" id="aboutView">
+  <div class="sky" aria-hidden="true">
+    <i class="stars s1"></i><i class="stars s2"></i><i class="stars s3"></i>
+    <span class="spark" style="left:12%;top:18%;--d:3.2s"></span>
+    <span class="spark" style="left:27%;top:74%;--d:4.1s;--delay:-1.3s"></span>
+    <span class="spark" style="left:73%;top:12%;--d:3.6s;--delay:-2.2s"></span>
+    <span class="spark" style="left:86%;top:46%;--d:4.6s;--delay:-.8s"></span>
+    <span class="spark" style="left:58%;top:88%;--d:3.9s;--delay:-3s"></span>
+    <span class="spark" style="left:40%;top:8%;--d:5s;--delay:-1.9s"></span>
+  </div>
   <div class="floats" aria-hidden="true">
     <span class="float f1"></span><span class="float f2"></span><span class="float f3"></span>
     <span class="float f4"></span><span class="float f5"></span>
   </div>
+  <div class="about-scroll" id="aboutScroll">
   <div class="page" data-lang-only="en" lang="en">
     <div class="eyebrow">About</div>
     <h1>Pin Your Someday</h1>
@@ -772,6 +824,7 @@
       <button class="link" data-go="board">내 꿈 붙이러 가기 →</button>
     </footer>
   </div>
+  </div>
 </main>
 
 <aside class="panel" id="archivePanel" hidden>
@@ -865,6 +918,7 @@
       selEdit: 'Edit', selEditHint: 'Edit (Enter or double-click)',
       selKeep: 'Save to Dreams', selKeepHint: 'Copy this card into Dreams',
       toFront: 'Bring to front', toBack: 'Send to back',
+      straighten: 'Straighten', straightenHint: 'Set the tilt to 0°', rotateHint: 'Drag to rotate (Shift: 15° steps)',
       del: 'Delete', delHint: 'Delete (Del / Backspace)',
       headEdit: 'Edit text', headEditHint: 'Edit the title (Enter or double-click)',
       headHide: 'Hide title', headHideHint: 'Hide the title (Del / Backspace)',
@@ -944,6 +998,7 @@
       selEdit: '수정', selEditHint: '수정 (Enter 또는 더블클릭)',
       selKeep: '보관함에 저장', selKeepHint: '이 카드를 꿈 보관함에 복사',
       toFront: '맨 앞으로', toBack: '맨 뒤로',
+      straighten: '똑바로', straightenHint: '기울기를 0°로', rotateHint: '끌어서 회전 (Shift: 15° 단위)',
       del: '삭제', delHint: '삭제 (Del / Backspace)',
       headEdit: '글자 수정', headEditHint: '타이틀 수정 (Enter 또는 더블클릭)',
       headHide: '타이틀 숨기기', headHideHint: '타이틀 숨기기 (Del / Backspace)',
@@ -1169,6 +1224,10 @@
     return t('byWhen', y, m, new Date(y, m - 1, 1).toLocaleDateString(locale(), { month: 'short', year: 'numeric' }));
   }
 
+  /** Decorative tilt derived from the id; used until the user rotates the card. */
+  const autoTilt = el => ((hash(el.id) % 7) - 3) * 0.8;
+  const tiltOf = el => (typeof el.rotation === 'number' ? el.rotation : autoTilt(el));
+
   function hash(s) {
     let h = 0;
     for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
@@ -1197,7 +1256,7 @@
     const h = hash(el.id);
     const c = el.category ? catColor(el.category) : null;
     return {
-      '--tilt': ((h % 7) - 3) * 0.8 + 'deg',
+      '--tilt': tiltOf(el) + 'deg',
       '--tape': c || TAPES[h % TAPES.length],
       '--c': c || 'var(--mid)',
       '--paper': c ? `color-mix(in srgb, ${c} 20%, #FAF9F5)` : PAPERS[h % PAPERS.length],
@@ -1491,7 +1550,7 @@
   function fillNode(node, el) {
     node.className = cardClass(el);
     for (const [k, v] of Object.entries(decoVars(el))) node.style.setProperty(k, v);
-    node.innerHTML = cardInner(el) + `<div class="resize" title="${t('resizeHint')}"></div>`;
+    node.innerHTML = cardInner(el) + `<div class="resize" title="${t('resizeHint')}"></div><div class="rotate" title="${t('rotateHint')}"></div>`;
     node.classList.toggle('selected', el.id === selectedId);
   }
 
@@ -1501,6 +1560,7 @@
     fillNode(node, el);
     node.addEventListener('pointerdown', e => {
       if (e.target.closest('.resize')) startResize(e, el.id);
+      else if (e.target.closest('.rotate')) startRotate(e, el.id);
       else startDrag(e, el.id);
     });
     node.addEventListener('dblclick', () => openBoardEdit(el.id));
@@ -1783,6 +1843,53 @@
     handle.addEventListener('pointercancel', up);
   }
 
+  // ================= Rotate (handle above the card) =================
+  function startRotate(e, id) {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const el = find(id);
+    const node = nodes.get(id);
+    if (!el || !node) return;
+    select(id);
+
+    const handle = e.target.closest('.rotate');
+    const r = node.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const angleAt = ev => Math.atan2(ev.clientY - cy, ev.clientX - cx) * 180 / Math.PI;
+    const startAngle = angleAt(e), origRot = tiltOf(el);
+    handle.setPointerCapture(e.pointerId);
+
+    const move = ev => {
+      selBar.hidden = true;
+      let rot = origRot + angleAt(ev) - startAngle;
+      rot = ((rot + 180) % 360 + 360) % 360 - 180;          // keep within -180..180
+      if (ev.shiftKey) rot = Math.round(rot / 15) * 15;        // Shift: 15° steps
+      else if (Math.abs(rot) < 2) rot = 0;                     // settle straight when close
+      el.rotation = Math.round(rot * 10) / 10;
+      node.style.setProperty('--tilt', el.rotation + 'deg');
+    };
+    const up = () => {
+      handle.removeEventListener('pointermove', move);
+      handle.removeEventListener('pointerup', up);
+      handle.removeEventListener('pointercancel', up);
+      updateToolbar();
+      scheduleSave();
+    };
+    handle.addEventListener('pointermove', move);
+    handle.addEventListener('pointerup', up);
+    handle.addEventListener('pointercancel', up);
+  }
+
+  function straightenSelected() {
+    const el = find(selectedId);
+    if (!el) return;
+    el.rotation = 0;
+    refreshNode(el);
+    updateToolbar();
+    scheduleSave();
+  }
+
   // Clicking empty space clears the selection.
   boardEl.addEventListener('pointerdown', e => {
     if (e.target === boardEl || e.target === emptyMsg) select(null);
@@ -1796,6 +1903,7 @@
   $('selKeep').addEventListener('click', () => { const el = find(selectedId); if (el) saveCardToDreams(el); });
   $('toFront').addEventListener('click', bringToFront);
   $('toBack').addEventListener('click', sendToBack);
+  $('selStraight').addEventListener('click', straightenSelected);
   $('delete').addEventListener('click', deleteSelected);
 
   // ================= Keyboard =================
@@ -2118,7 +2226,7 @@
     document.querySelectorAll('.tabs [data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === view));
     if (updateHash) history.replaceState(null, '', view === 'board' ? location.pathname + location.search : '#' + view);
     if (view === 'dreams') loadDreams();
-    else if (view === 'about') $('aboutView').scrollTop = 0;
+    else if (view === 'about') $('aboutScroll').scrollTop = 0;
     else fit();
   }
   document.querySelectorAll('.tabs [data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
