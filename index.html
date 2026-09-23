@@ -416,6 +416,80 @@
   .form .keep[hidden] { display: none; }
   .actions { display: flex; gap: 8px; margin-top: 26px; }
 
+  /* ---------- Motion ---------- */
+  /* A new card drops onto the board and its tape "sticks" a beat later. */
+  .el.pin-in { animation: pinIn .55s cubic-bezier(.2, .8, .3, 1) both; }
+  .el.pin-in::before { animation: tapeStick .3s .32s cubic-bezier(.2, .8, .3, 1) both; }
+  @keyframes pinIn {
+    0%   { transform: translateY(-70px) rotate(calc(var(--tilt, 0deg) - 5deg)) scale(1.06); opacity: 0;
+           filter: drop-shadow(0 30px 24px rgba(20, 20, 19, .28)); }
+    65%  { transform: translateY(5px) rotate(calc(var(--tilt, 0deg) + 1.2deg)) scale(1); opacity: 1;
+           filter: drop-shadow(0 4px 6px rgba(20, 20, 19, .12)); }
+    100% { transform: rotate(var(--tilt, 0deg)); filter: none; }
+  }
+  @keyframes tapeStick {
+    from { transform: translateX(-50%) rotate(-3deg) scaleX(0); }
+    to   { transform: translateX(-50%) rotate(-3deg) scaleX(1); }
+  }
+
+  /* Saving to the archive: a soft camera-like flash over the board, and the Archive button nods. */
+  .board.keep-flash::after {
+    content: ""; position: absolute; inset: 0; z-index: 999998; pointer-events: none;
+    background: radial-gradient(ellipse at center, rgba(255, 250, 240, .95), rgba(217, 119, 87, .35));
+    animation: keepFlash .7s ease-out both;
+  }
+  @keyframes keepFlash { from { opacity: .9; } to { opacity: 0; } }
+  .btn.bump { animation: bump .6s cubic-bezier(.2, .8, .3, 1); }
+  @keyframes bump {
+    0% { transform: scale(1); } 35% { transform: scale(1.12); background: var(--orange); color: #fff; border-color: var(--orange); }
+    100% { transform: scale(1); }
+  }
+
+  /* Dreams grid: cards rise in with a small stagger. */
+  .dcard, .new-card { animation: riseIn .45s cubic-bezier(.2, .8, .3, 1) backwards; }
+  .dgrid > :nth-child(2) { animation-delay: .04s; }
+  .dgrid > :nth-child(3) { animation-delay: .08s; }
+  .dgrid > :nth-child(4) { animation-delay: .12s; }
+  .dgrid > :nth-child(5) { animation-delay: .16s; }
+  .dgrid > :nth-child(6) { animation-delay: .20s; }
+  .dgrid > :nth-child(7) { animation-delay: .24s; }
+  .dgrid > :nth-child(8) { animation-delay: .28s; }
+  .dgrid > :nth-child(n+9) { animation-delay: .32s; }
+  @keyframes riseIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+
+  /* About: a few polaroids drifting slowly behind the page. */
+  .about-view { position: relative; }
+  .about-view .page { position: relative; z-index: 1; }
+  .about-view .floats { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+  .about-view .float {
+    position: absolute; width: 130px; height: 158px; padding: 9px 9px 30px; background: #fff;
+    box-shadow: 0 8px 22px rgba(20, 20, 19, .14); opacity: .85;
+    transform: rotate(var(--r, 0deg));
+    animation: drift var(--d, 14s) ease-in-out infinite alternate;
+    animation-delay: var(--delay, 0s);
+  }
+  .about-view .float::before {
+    content: ""; position: absolute; top: -8px; left: 50%; width: 52px; height: 16px; margin-left: -26px;
+    background: var(--tape, var(--orange)); opacity: .78; transform: rotate(-3deg);
+  }
+  .about-view .float::after { content: ""; display: block; width: 100%; height: 100%; background: var(--g); }
+  .about-view .f1 { left: 4%;  top: 60px;  --r: -6deg; --d: 15s; --tape: var(--orange); --g: linear-gradient(180deg, #F2C4A8 0%, #D97757 55%, #8A4A3A 56%, #5E3A33 100%); }
+  .about-view .f2 { left: 11%; top: 420px; --r: 4deg;  --d: 18s; --delay: -6s; --tape: var(--blue);   --g: linear-gradient(180deg, #CFE0EF 0%, #9DBEDD 45%, #6A9BCC 46%, #3F6E99 100%); }
+  .about-view .f3 { right: 5%; top: 120px; --r: 5deg;  --d: 17s; --delay: -3s; --tape: var(--green);  --g: radial-gradient(ellipse 60% 40% at 30% 100%, #4E5E3B 60%, transparent 61%), radial-gradient(ellipse 55% 45% at 80% 100%, #5F7148 60%, transparent 61%), linear-gradient(180deg, #E4E8D6 0%, #B9C6A0 60%, #788C5D 100%); }
+  .about-view .f4 { right: 12%; top: 520px; --r: -3deg; --d: 16s; --delay: -9s; --tape: var(--orange); --g: linear-gradient(0deg, #C9B89A 0 30%, transparent 30%), linear-gradient(90deg, transparent 38%, #FAF9F5 38% 62%, transparent 62%) 0 0 / 100% 70% no-repeat, linear-gradient(180deg, #F3E3D3, #E8C9AE); }
+  .about-view .f5 { left: 6%;  top: 780px; --r: 3deg;  --d: 19s; --delay: -12s; --tape: var(--blue);  --g: radial-gradient(circle at 75% 30%, #F2E7C9 0 8%, transparent 9%), linear-gradient(180deg, #2A3448, #141413); }
+  @keyframes drift {
+    from { transform: translateY(0) rotate(var(--r, 0deg)); }
+    to   { transform: translateY(-28px) rotate(calc(var(--r, 0deg) + 3deg)); }
+  }
+  @media (max-width: 1100px) { .about-view .floats { display: none; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .el.pin-in, .el.pin-in::before, .board.keep-flash::after, .btn.bump, .dcard, .new-card, .about-view .float {
+      animation: none !important;
+    }
+  }
+
   /* ---------- Archive panel ---------- */
   .panel {
     position: fixed; top: 0; right: 0; bottom: 0; width: 420px; max-width: 100vw; z-index: 1000;
@@ -545,6 +619,10 @@
 </main>
 
 <main class="about-view" id="aboutView">
+  <div class="floats" aria-hidden="true">
+    <span class="float f1"></span><span class="float f2"></span><span class="float f3"></span>
+    <span class="float f4"></span><span class="float f5"></span>
+  </div>
   <div class="page" data-lang-only="en" lang="en">
     <div class="eyebrow">About</div>
     <h1>Pin Your Someday</h1>
@@ -1359,6 +1437,11 @@
     selectedId = el.id;
     render();
     scheduleSave();
+    const node = nodes.get(el.id);
+    if (node) {
+      node.classList.add('pin-in');
+      node.addEventListener('animationend', () => node.classList.remove('pin-in'), { once: true });
+    }
     return el;
   }
 
@@ -2269,6 +2352,15 @@ ${css}
       }
       await putSnapshot({ id: uid(), boardDate: board.date, title: board.title, heading: headingOf(board), note: note.trim(), savedAt: Date.now(), elements });
       setStatus(t('archived'));
+      boardEl.classList.remove('keep-flash');
+      void boardEl.offsetWidth; // restart the animation if it just played
+      boardEl.classList.add('keep-flash');
+      setTimeout(() => boardEl.classList.remove('keep-flash'), 800);
+      const ab = $('archiveBtn');
+      ab.classList.remove('bump');
+      void ab.offsetWidth;
+      ab.classList.add('bump');
+      setTimeout(() => ab.classList.remove('bump'), 700);
       if (!archivePanel.hidden) renderArchive();
     } catch (e) {
       console.error(e);
