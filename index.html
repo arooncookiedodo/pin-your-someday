@@ -156,13 +156,14 @@
   /* ---------- About view (intro shown on first visit) ---------- */
   .about-view { flex: 1; position: relative; overflow: hidden; background: #F6DCCB; }
   .about-scroll { position: absolute; inset: 0; overflow: auto; z-index: 2; }
+  /* Shared sky: a gradient, faint twinkling stars and slow clouds. Each view sets its own colours. */
+  .sky { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
   .about-view .sky {
-    position: absolute; inset: 0; overflow: hidden; pointer-events: none;
     background:
       radial-gradient(ellipse 55% 38% at 50% 104%, rgba(255, 240, 210, .95), rgba(255, 220, 190, .5) 45%, transparent 72%),
       linear-gradient(180deg, #D9D3E8 0%, #EBC9CF 22%, #F2C4B8 42%, #F7DCC8 66%, #FBEFE3 100%);
   }
-  .about-view .stars {
+  .sky .stars {
     position: absolute; inset: -240px; opacity: .55;
     background-image:
       radial-gradient(circle, rgba(255, 255, 255, .95) 0 1px, transparent 1.7px),
@@ -173,16 +174,16 @@
     mask-image: linear-gradient(180deg, #000 0, #000 22%, transparent 55%);
     animation: twinkle 4s ease-in-out infinite alternate;
   }
-  .about-view .s2 { background-size: 240px 240px, 170px 170px; background-position: 100px 40px, 20px 120px; animation-duration: 6.5s; animation-delay: -2s; }
-  .about-view .s3 { background-size: 95px 95px, 310px 310px; background-position: 30px 70px, 150px 200px; animation-duration: 5.2s; animation-delay: -4s; }
+  .sky .s2 { background-size: 240px 240px, 170px 170px; background-position: 100px 40px, 20px 120px; animation-duration: 6.5s; animation-delay: -2s; }
+  .sky .s3 { background-size: 95px 95px, 310px 310px; background-position: 30px 70px, 150px 200px; animation-duration: 5.2s; animation-delay: -4s; }
   @keyframes twinkle { from { opacity: .15; } to { opacity: .6; } }
-  .about-view .cloud {
+  .sky .cloud {
     position: absolute; left: 0; width: 460px; height: 150px; opacity: var(--o, .9); filter: blur(1.5px);
     background:
-      radial-gradient(circle at 26% 68%, rgba(255, 255, 255, .95) 0 58px, transparent 59px),
-      radial-gradient(circle at 48% 44%, rgba(255, 255, 255, .95) 0 74px, transparent 75px),
-      radial-gradient(circle at 70% 62%, rgba(255, 255, 255, .95) 0 56px, transparent 57px),
-      radial-gradient(circle at 86% 74%, rgba(255, 255, 255, .9) 0 38px, transparent 39px),
+      radial-gradient(circle at 26% 68%, var(--cloud, rgba(255, 255, 255, .95)) 0 58px, transparent 59px),
+      radial-gradient(circle at 48% 44%, var(--cloud, rgba(255, 255, 255, .95)) 0 74px, transparent 75px),
+      radial-gradient(circle at 70% 62%, var(--cloud, rgba(255, 255, 255, .95)) 0 56px, transparent 57px),
+      radial-gradient(circle at 86% 74%, var(--cloud, rgba(255, 255, 255, .9)) 0 38px, transparent 39px),
       radial-gradient(ellipse 46% 34% at 52% 84%, rgba(255, 244, 240, .95) 0 60%, transparent 61%);
     animation: cloudDrift var(--d, 110s) linear infinite; animation-delay: var(--delay, 0s);
   }
@@ -291,6 +292,13 @@
     flex: 1; position: relative; overflow: hidden;
     display: flex; align-items: center; justify-content: center;
   }
+  .stage .sky {
+    background:
+      radial-gradient(ellipse 45% 40% at 84% -6%, rgba(255, 246, 214, .95), rgba(255, 236, 200, .45) 45%, transparent 72%),
+      linear-gradient(180deg, #BFD5EC 0%, #D6E4F2 38%, #E9ECEC 72%, #F3ECDF 100%);
+  }
+  .stage .sky .stars { display: none; }
+  .stage .board-wrap { z-index: 1; }
   .board.dragover::after {
     content: attr(data-drop-label); position: absolute; inset: 30px;
     display: flex; align-items: center; justify-content: center;
@@ -371,7 +379,19 @@
   .sel-bar[data-mode="card"] [data-for="heading"] { display: none; }
 
   /* ---------- Dreams view ---------- */
-  .dreams-view { flex: 1; overflow: auto; }
+  .dreams-view { flex: 1; position: relative; overflow: hidden; background: #E8C9C9; }
+  .dreams-scroll { position: absolute; inset: 0; overflow: auto; z-index: 2; }
+  .dreams-view .sky {
+    --cloud: rgba(255, 236, 228, .95);
+    background:
+      radial-gradient(ellipse 60% 40% at 30% 106%, rgba(255, 214, 170, .95), rgba(250, 190, 150, .45) 45%, transparent 72%),
+      linear-gradient(180deg, #A9B6DA 0%, #C9B4D4 26%, #E7B9B6 52%, #F4CFBB 76%, #F8E4D6 100%);
+  }
+  .dreams-view .sky .stars { opacity: .5; }
+  .dreams-view .dcard, .dreams-view .new-card { box-shadow: 0 6px 18px rgba(110, 70, 80, .18); }
+  .dreams-view .new-card { background: rgba(255, 255, 255, .35); border-color: rgba(255, 255, 255, .8); color: #5a4a4f; }
+  .dreams-view .topline p, .dreams-view .topline h2 .count { color: #5a4a4f; }
+  .dreams-view .chip { background: rgba(255, 255, 255, .8); }
   .dwrap { max-width: 1280px; margin: 0 auto; padding: 36px 32px 60px; }
   .topline { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
   .topline h2 { font-family: var(--serif); font-weight: normal; font-size: 38px; margin: 0; }
@@ -505,7 +525,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .el.pin-in, .el.pin-in::before, .board.keep-flash::after, .btn.bump, .dcard, .new-card,
-    .about-view .stars, .about-view .cloud {
+    .sky .stars, .sky .cloud {
       animation: none !important;
     }
   }
@@ -590,6 +610,12 @@
 </header>
 
 <div class="stage" id="stage">
+  <div class="sky" aria-hidden="true">
+    <i class="cloud" style="top:5%;--s:1;--d:100s"></i>
+    <i class="cloud" style="top:22%;--s:.6;--d:140s;--delay:-60s;--o:.7"></i>
+    <i class="cloud" style="top:62%;--s:1.2;--d:115s;--delay:-90s"></i>
+    <i class="cloud" style="top:84%;--s:.8;--d:150s;--delay:-30s;--o:.8"></i>
+  </div>
   <div class="sel-bar" id="selBar" data-mode="card" hidden>
     <button id="selEdit" data-for="card" data-i18n="selEdit" data-i18n-title="selEditHint">Edit</button>
     <button id="selKeep" data-for="card" data-i18n="selKeep" data-i18n-title="selKeepHint">Save to Dreams</button>
@@ -618,6 +644,14 @@
 </div>
 
 <main class="dreams-view" id="dreamsView">
+  <div class="sky" aria-hidden="true">
+    <i class="stars s1"></i><i class="stars s2"></i><i class="stars s3"></i>
+    <i class="cloud" style="top:8%;--s:1;--d:100s"></i>
+    <i class="cloud" style="top:30%;--s:.6;--d:140s;--delay:-60s;--o:.7"></i>
+    <i class="cloud" style="top:55%;--s:1.2;--d:115s;--delay:-90s"></i>
+    <i class="cloud" style="top:78%;--s:.8;--d:150s;--delay:-30s;--o:.8"></i>
+  </div>
+  <div class="dreams-scroll">
   <div class="dwrap">
     <div class="topline">
       <div>
@@ -636,6 +670,7 @@
     </div>
     <div class="chips" id="dChips"></div>
     <div class="dgrid" id="dGrid"></div>
+  </div>
   </div>
 </main>
 
