@@ -1,6 +1,6 @@
 # Pin Your Someday
 
-**Pin today's dreams. Meet them again someday.**
+**Pin today's dreams. Meet them again someday.** · 한국어 이름: **오늘의 꿈, 언젠가 다시**
 
 Live: https://pin-your-someday.vercel.app
 
@@ -36,8 +36,8 @@ Everything on a board is a **dream card** with the same fields as the Dreams lib
 - **Dreams library**: card grid with search, category filters, and sorting (target date, newest, A–Z). Click a card to edit or delete it. "Add to board" **copies** the dream onto the current date's board and switches back to it. Editing or deleting a dream never changes cards already on boards. "✓ on this board" marks dreams copied onto the current board.
 - **Keep ▾ → Save to archive…**: keeps the current board as a version you can look back on years later, with an optional note to your future self. Nothing is archived automatically.
 - **Archive**: opens a panel listing kept versions by year and month. Each shows which dreams (by title) appeared or disappeared since the previous version. **View** opens it as HTML in a new tab, **Download** saves that HTML file, and **Delete** removes it.
-- **⋯ menu**: "About My Treasure Map" opens the About view (`about.html` is kept as a standalone copy). "Clear this board" removes the current date's board. "Delete all boards…" wipes every saved board after you type `RESET`. Neither can be undone; Dreams, the archive and published HTML files are kept.
-- **Keep ▾ → Publish as HTML**: downloads `my-treasure-map-YYYY-MM-DD.html`, a read-only copy of the board with the photos embedded. It shows the title, the board date, and "Published <date & time>"; the publish time is also stored in `<meta name="published-at">`.
+- **⋯ menu**: "About Pin Your Someday" opens the About view (`about.html` is kept as a standalone copy). "Clear this board" removes the current date's board. "Delete all boards…" wipes every saved board after you type `RESET`. Neither can be undone; Dreams, the archive and published HTML files are kept.
+- **Keep ▾ → Publish as HTML**: downloads `pin-your-someday-YYYY-MM-DD.html`, a read-only copy of the board with the photos embedded. It shows the title, the board date, and "Published <date & time>"; the publish time is also stored in `<meta name="published-at">`.
 
 ## Language
 

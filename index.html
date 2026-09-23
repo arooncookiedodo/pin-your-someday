@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>My Treasure Map</title>
+<title>Pin Your Someday</title>
 <style id="boardStyles">
   /* Theme A — "Paper gallery", built on the Claude core palette.
      This stylesheet is also embedded into published HTML files. */
@@ -481,7 +481,7 @@
   <div class="menu-wrap">
     <button class="btn icon" data-menu="moreMenu" title="More" aria-label="More" aria-haspopup="true" data-i18n-title="more">⋯</button>
     <div class="menu" id="moreMenu" hidden>
-      <button id="openAbout"><b data-i18n="aboutMenu">About My Treasure Map</b><small data-i18n="aboutMenuSub">What this is and how to use it</small></button>
+      <button id="openAbout"><b data-i18n="aboutMenu">About Pin Your Someday</b><small data-i18n="aboutMenuSub">What this is and how to use it</small></button>
       <div class="menu-sep"></div>
       <button id="toggleHeading"><b>Hide board title</b><small data-i18n="titleMenuSub">The big title shown on the board</small></button>
       <div class="menu-sep"></div>
@@ -527,7 +527,7 @@
     <div class="topline">
       <div>
         <h2><span data-i18n="dreamsTitle">Dreams</span><span class="count" id="dCount"></span></h2>
-        <p data-i18n="dreamsSub">Photos, words and ideas you're keeping for your treasure map.</p>
+        <p data-i18n="dreamsSub">Photos, words and ideas you're keeping for your board.</p>
       </div>
       <div class="tools">
         <input class="field search" id="dSearch" type="search" data-i18n-ph="search">
@@ -547,10 +547,10 @@
 <main class="about-view" id="aboutView">
   <div class="page" data-lang-only="en" lang="en">
     <div class="eyebrow">About</div>
-    <h1>My Treasure Map</h1>
+    <h1>Pin Your Someday</h1>
 
     <p class="lead">
-      My Treasure Map is a digital tool for making a treasure map — a vision board of your dreams —
+      Pin Your Someday is a digital tool for making a treasure map — a vision board of your dreams —
       inspired by Toshitaka Mochizuki's book <cite>《당신의 소중한 꿈을 이루는 보물지도》</cite> (Korean edition).
     </p>
     <p class="sub">
@@ -558,7 +558,7 @@
       and publish the finished board as an HTML file to keep or share.
     </p>
 
-    <div class="cta-row"><button class="cta" data-go="board">Start my treasure map →</button><button class="cta ghost" data-go="dreams">Browse Dreams</button></div>
+    <div class="cta-row"><button class="cta" data-go="board">Pin my someday →</button><button class="cta ghost" data-go="dreams">Browse Dreams</button></div>
 
     <h2>How to use</h2>
     <ol class="steps">
@@ -615,14 +615,14 @@
     </div>
 
     <footer class="about-foot">
-      <span>My Treasure Map · works offline, nothing to install</span>
-      <button class="link" data-go="board">Start my treasure map →</button>
+      <span>Pin Your Someday · works offline, nothing to install</span>
+      <button class="link" data-go="board">Pin my someday →</button>
     </footer>
   </div>
 
   <div class="page" data-lang-only="ko" lang="ko">
-    <div class="eyebrow">About</div>
-    <h1>나의 보물지도</h1>
+    <div class="eyebrow">Pin Your Someday</div>
+    <h1>오늘의 꿈, 언젠가 다시</h1>
 
     <p class="lead">
       이 앱은 모치즈키 도시타카의 <cite>《당신의 소중한 꿈을 이루는 보물지도》</cite>에서
@@ -633,7 +633,7 @@
       완성된 보드를 HTML 파일로 발행해 간직하거나 공유할 수 있습니다.
     </p>
 
-    <div class="cta-row"><button class="cta" data-go="board">보물지도 만들기 →</button><button class="cta ghost" data-go="dreams">꿈 보관함 보기</button></div>
+    <div class="cta-row"><button class="cta" data-go="board">내 꿈 붙이러 가기 →</button><button class="cta ghost" data-go="dreams">꿈 보관함 보기</button></div>
 
     <h2>사용법</h2>
     <ol class="steps">
@@ -663,7 +663,7 @@
       </li>
       <li>
         <b>아카이브에 간직하기</b>
-        <p>지금의 보물지도를 남겨두고 싶을 때 <em>간직하기 ▾ → 아카이브에 간직하기</em>를 누르고, 미래의 나에게 한마디를 적어두세요. <em>아카이브</em>에서 연도·월별로 돌아보며 어떤 꿈이 새로 생기고 어떤 꿈을 내려놓았는지 볼 수 있어요.</p>
+        <p>지금의 보드를 남겨두고 싶을 때 <em>간직하기 ▾ → 아카이브에 간직하기</em>를 누르고, 미래의 나에게 한마디를 적어두세요. <em>아카이브</em>에서 연도·월별로 돌아보며 어떤 꿈이 새로 생기고 어떤 꿈을 내려놓았는지 볼 수 있어요.</p>
       </li>
     </ol>
 
@@ -690,15 +690,15 @@
     </div>
 
     <footer class="about-foot">
-      <span>나의 보물지도 · 설치나 인터넷 연결 없이 동작합니다</span>
-      <button class="link" data-go="board">보물지도 만들기 →</button>
+      <span>오늘의 꿈, 언젠가 다시 · 설치나 인터넷 연결 없이 동작합니다</span>
+      <button class="link" data-go="board">내 꿈 붙이러 가기 →</button>
     </footer>
   </div>
 </main>
 
 <aside class="panel" id="archivePanel" hidden>
   <div class="panel-head"><h2 data-i18n="archive">Archive</h2><button class="btn" id="closeArchive" data-i18n="close">Close</button></div>
-  <p class="panel-sub" data-i18n="archiveSub">Versions of your treasure map you chose to keep — so you can look back on how your dreams changed.</p>
+  <p class="panel-sub" data-i18n="archiveSub">Versions of your board you chose to keep — so you can look back on how your dreams changed.</p>
   <div class="archive-list" id="archiveList"></div>
 </aside>
 
@@ -758,6 +758,8 @@
     Home: '#B8966E', Growth: '#8FA37A', Money: '#B0AEA5', Fun: '#8EB4D9',
   };
   const catColor = c => CATEGORIES[c] || '#B0AEA5';
+  /** Default board titles from before the rename to "Pin Your Someday". */
+  const OLD_DEFAULT_TITLES = ['My Treasure Map', '나의 보물지도'];
 
   // ================= Language (English / 한국어) =================
   const LANG_KEY = 'treasure-map:lang';
@@ -769,7 +771,7 @@
   const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
   const I18N = {
     en: {
-      defaultTitle: 'My Treasure Map',
+      defaultTitle: 'Pin Your Someday',
       renameHint: 'Click to rename',
       tabBoard: 'Board', tabDreams: 'Dreams', tabAbout: 'About',
       boardDate: 'Board date', jumpBoard: 'Jump to a saved board',
@@ -779,7 +781,7 @@
       saveArchive: 'Save to archive…', saveArchiveSub: 'Keep this version to look back on later',
       publish: 'Publish as HTML', publishSub: 'Download a read-only copy to share',
       more: 'More',
-      aboutMenu: 'About My Treasure Map', aboutMenuSub: 'What this is and how to use it',
+      aboutMenu: 'About Pin Your Someday', aboutMenuSub: 'What this is and how to use it',
       hideTitle: 'Hide board title', showTitle: 'Show board title', titleMenuSub: 'The big title shown on the board',
       clearBoard: 'Clear this board…', resetAll: 'Delete all boards…',
       selEdit: 'Edit', selEditHint: 'Edit (Enter or double-click)',
@@ -794,7 +796,7 @@
       emptyText: 'Click <b>+ Dream</b>, drop a photo onto the board, or paste one with Ctrl+V / ⌘V.<br>Or bring in dreams you\'ve kept in <b>Dreams</b>.',
       emptyAdd: '+ Add a dream',
       startFrom: d => `Start from the ${d} board`,
-      dreamsTitle: 'Dreams', dreamsSub: 'Photos, words and ideas you\'re keeping for your treasure map.',
+      dreamsTitle: 'Dreams', dreamsSub: 'Photos, words and ideas you\'re keeping for your board.',
       search: 'Search dreams…',
       sortWhen: 'Sort: Target date', sortNew: 'Sort: Newest', sortTitle: 'Sort: A–Z',
       newDream: '+ New dream', newDreamCard: 'New dream',
@@ -804,7 +806,7 @@
       byWhen: (y, m, label) => `By ${label}`,
       emptyCard: 'Empty card',
       close: 'Close',
-      archiveSub: 'Versions of your treasure map you chose to keep — so you can look back on how your dreams changed.',
+      archiveSub: 'Versions of your board you chose to keep — so you can look back on how your dreams changed.',
       formNew: 'New dream', formEdit: 'Edit dream',
       fTitle: 'Dream title', fTitlePh: 'e.g. Live by the sea for a month',
       fDesc: 'Description', fDescPh: 'Why it matters, what it looks like…',
@@ -824,8 +826,8 @@
       photoMissing: 'Could not find this photo',
       addedToBoard: d => `Added to the ${d} board`, addFail: 'Could not add to the board',
       loading: 'Still loading…', saving: 'Saving…', saved: 'Saved', saveFail: 'Could not save',
-      otherTab: 'Updated in another tab — please reload', closeTabs: 'Close other Treasure Map tabs',
-      blockedAlert: 'My Treasure Map was updated.\n\nPlease close any other tabs where it is open — this page will continue automatically.',
+      otherTab: 'Updated in another tab — please reload', closeTabs: 'Close other Pin Your Someday tabs',
+      blockedAlert: 'Pin Your Someday was updated.\n\nPlease close any other tabs where it is open — this page will continue automatically.',
       storageFail: 'Storage unavailable',
       readError: name => `Could not read image: ${name}`, pastedImage: 'pasted image',
       confirmClear: d => `Clear the ${d} board?\n\nAll cards on it will be removed. Your Dreams are not affected. This can't be undone.`,
@@ -835,7 +837,7 @@
       publishEmpty: 'This board is empty. Publish anyway?',
       publishedAt: time => `Published ${time}`,
       archiveEmptyBoard: 'This board is empty — add a dream first.',
-      archivePrompt: 'Save this treasure map to your archive.\n\nA note for your future self (optional):',
+      archivePrompt: 'Save this board to your archive.\n\nA note for your future self (optional):',
       archived: 'Saved to archive', archiveFail: 'Could not archive',
       snapEmpty: 'Nothing archived yet.<br>Choose <b>Keep ▾ → Save to archive</b> when your map feels right —<br>it will wait here for your future self.',
       boardOf: (title, d) => `${title} · board of ${d}`,
@@ -848,7 +850,7 @@
       pubLabel: 'Published', archLabel: 'Saved to archive',
     },
     ko: {
-      defaultTitle: '나의 보물지도',
+      defaultTitle: '오늘의 꿈, 언젠가 다시',
       renameHint: '클릭해서 이름 바꾸기',
       tabBoard: '보드', tabDreams: '꿈 보관함', tabAbout: '소개',
       boardDate: '보드 날짜', jumpBoard: '저장된 보드로 이동',
@@ -858,7 +860,7 @@
       saveArchive: '아카이브에 간직하기…', saveArchiveSub: '나중에 돌아볼 수 있게 이 버전을 보관해요',
       publish: 'HTML로 발행', publishSub: '공유용 보기 전용 파일을 내려받아요',
       more: '더보기',
-      aboutMenu: '나의 보물지도 소개', aboutMenuSub: '무엇이고 어떻게 쓰는지',
+      aboutMenu: '‘오늘의 꿈, 언젠가 다시’ 소개', aboutMenuSub: '무엇이고 어떻게 쓰는지',
       hideTitle: '보드 타이틀 숨기기', showTitle: '보드 타이틀 보이기', titleMenuSub: '보드 위에 크게 보이는 제목',
       clearBoard: '이 보드 비우기…', resetAll: '모든 보드 삭제…',
       selEdit: '수정', selEditHint: '수정 (Enter 또는 더블클릭)',
@@ -873,7 +875,7 @@
       emptyText: '<b>+ 꿈</b>을 누르거나, 사진을 보드에 끌어다 놓거나, Ctrl+V / ⌘V로 붙여 넣으세요.<br><b>꿈 보관함</b>에 모아둔 꿈을 가져올 수도 있어요.',
       emptyAdd: '+ 꿈 추가하기',
       startFrom: d => `${d} 보드에서 시작하기`,
-      dreamsTitle: '꿈 보관함', dreamsSub: '보물지도에 쓰려고 모아둔 사진, 문장, 아이디어예요.',
+      dreamsTitle: '꿈 보관함', dreamsSub: '보드에 쓰려고 모아둔 사진, 문장, 아이디어예요.',
       search: '꿈 검색…',
       sortWhen: '정렬: 원하는 시기', sortNew: '정렬: 최신순', sortTitle: '정렬: 이름순',
       newDream: '+ 새 꿈', newDreamCard: '새 꿈',
@@ -883,7 +885,7 @@
       byWhen: (y, m) => `${y}년 ${m}월까지`,
       emptyCard: '빈 카드',
       close: '닫기',
-      archiveSub: '간직하기로 한 보물지도 버전들이에요. 꿈이 어떻게 바뀌어 왔는지 돌아볼 수 있어요.',
+      archiveSub: '간직하기로 한 보드 버전들이에요. 꿈이 어떻게 바뀌어 왔는지 돌아볼 수 있어요.',
       formNew: '새 꿈', formEdit: '꿈 수정',
       fTitle: '꿈 제목', fTitlePh: '예: 바닷가에서 한 달 살기',
       fDesc: '설명', fDescPh: '왜 중요한지, 어떤 모습인지…',
@@ -903,8 +905,8 @@
       photoMissing: '사진을 찾을 수 없어요',
       addedToBoard: d => `${d} 보드에 붙였어요`, addFail: '보드에 붙이지 못했어요',
       loading: '불러오는 중…', saving: '저장 중…', saved: '저장됨', saveFail: '저장 실패',
-      otherTab: '다른 탭에서 업데이트됨 — 새로고침해 주세요', closeTabs: '다른 보물지도 탭을 닫아 주세요',
-      blockedAlert: '나의 보물지도가 업데이트됐어요.\n\n이 앱이 열린 다른 탭을 모두 닫아 주세요. 닫으면 이 페이지가 자동으로 이어서 열려요.',
+      otherTab: '다른 탭에서 업데이트됨 — 새로고침해 주세요', closeTabs: '이 앱이 열린 다른 탭을 닫아 주세요',
+      blockedAlert: '앱이 업데이트됐어요.\n\n이 앱이 열린 다른 탭을 모두 닫아 주세요. 닫으면 이 페이지가 자동으로 이어서 열려요.',
       storageFail: '저장소를 쓸 수 없어요',
       readError: name => `이미지를 읽을 수 없어요: ${name}`, pastedImage: '붙여 넣은 이미지',
       confirmClear: d => `${d} 보드를 비울까요?\n\n보드의 카드가 모두 지워져요. 꿈 보관함은 그대로예요. 되돌릴 수 없어요.`,
@@ -914,12 +916,12 @@
       publishEmpty: '보드가 비어 있어요. 그래도 발행할까요?',
       publishedAt: time => `${time} 발행됨`,
       archiveEmptyBoard: '보드가 비어 있어요 — 먼저 꿈을 붙여 주세요.',
-      archivePrompt: '이 보물지도를 아카이브에 간직해요.\n\n미래의 나에게 남길 한마디 (선택):',
+      archivePrompt: '이 보드를 아카이브에 간직해요.\n\n미래의 나에게 남길 한마디 (선택):',
       archived: '아카이브에 간직했어요', archiveFail: '아카이브하지 못했어요',
-      snapEmpty: '아직 간직한 버전이 없어요.<br>보물지도가 마음에 들 때 <b>간직하기 ▾ → 아카이브에 간직하기</b>를 누르세요.<br>미래의 나를 위해 여기서 기다릴게요.',
+      snapEmpty: '아직 간직한 버전이 없어요.<br>보드가 마음에 들 때 <b>간직하기 ▾ → 아카이브에 간직하기</b>를 누르세요.<br>미래의 나를 위해 여기서 기다릴게요.',
       boardOf: (title, d) => `${title} · ${d} 보드`,
       view: '보기', download: '다운로드',
-      firstMap: (n, m) => `처음 간직한 보물지도 · 꿈 ${n}개` + (m ? `, 제목 없는 사진 ${m}장` : ''),
+      firstMap: (n, m) => `처음 간직한 보드 · 꿈 ${n}개` + (m ? `, 제목 없는 사진 ${m}장` : ''),
       untitledPhotos: n => `제목 없는 사진 ${n}장`,
       sameDreams: '이전 버전과 같은 꿈이에요',
       confirmDeleteSnap: '이 버전을 삭제할까요? 되돌릴 수 없어요.',
@@ -1252,6 +1254,7 @@
     await flush();
     const stored = await getBoard(date);
     board = stored ? { ...stored, elements: stored.elements.map(normalizeEl) } : blankBoard(date);
+    if (OLD_DEFAULT_TITLES.includes(board.title)) board.title = t('defaultTitle');
     selectedId = null;
     headingSelected = false;
     dateInput.value = date;
@@ -1272,7 +1275,7 @@
   async function copyFromBoard(date) {
     const src = await getBoard(date);
     if (!src) return;
-    board.title = src.title;
+    board.title = OLD_DEFAULT_TITLES.includes(src.title) ? t('defaultTitle') : src.title;
     board.heading = src.heading ? { ...src.heading } : undefined;
     board.elements = structuredClone(src.elements).map(normalizeEl);
     renderTitle();
@@ -2240,7 +2243,7 @@ ${css}
     if (!ready()) return;
     if (!board.elements.length && !confirm(t('publishEmpty'))) return;
     const publishedAt = new Date();
-    downloadHtml(buildPublishedHtml(board, publishedAt), `my-treasure-map-${board.date}.html`);
+    downloadHtml(buildPublishedHtml(board, publishedAt), `pin-your-someday-${board.date}.html`);
     board.publishedAt = publishedAt.getTime();
     scheduleSave();
     await flush();
@@ -2364,10 +2367,10 @@ ${css}
       const w = window.open('', '_blank'); // open synchronously so popup blockers allow it
       const html = await snapshotHtml(snap);
       if (w) { w.document.open(); w.document.write(html); w.document.close(); }
-      else downloadHtml(html, `my-treasure-map-${snap.boardDate}-archived.html`);
+      else downloadHtml(html, `pin-your-someday-${snap.boardDate}-archived.html`);
     } else if (act === 'download') {
       const stamp = new Date(snap.savedAt);
-      const file = `my-treasure-map-${snap.boardDate}-archived-${stamp.getFullYear()}${pad2(stamp.getMonth() + 1)}${pad2(stamp.getDate())}-${pad2(stamp.getHours())}${pad2(stamp.getMinutes())}.html`;
+      const file = `pin-your-someday-${snap.boardDate}-archived-${stamp.getFullYear()}${pad2(stamp.getMonth() + 1)}${pad2(stamp.getDate())}-${pad2(stamp.getHours())}${pad2(stamp.getMinutes())}.html`;
       downloadHtml(await snapshotHtml(snap), file);
     } else if (act === 'delete') {
       if (!confirm(t('confirmDeleteSnap'))) return;
