@@ -1,0 +1,8 @@
+.vercel
+.env*
+
+# Local-only files: earlier versions, design previews, submission notes
+index.v*.html
+theme-preview.html
+dreams-preview.html
+SUBMISSION.md

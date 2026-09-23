@@ -1,0 +1,2488 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My Treasure Map</title>
+<style id="boardStyles">
+  /* Theme A — "Paper gallery", built on the Claude core palette.
+     This stylesheet is also embedded into published HTML files. */
+  :root {
+    --ivory: #FAF9F5;
+    --light: #E8E6DC;
+    --mid: #B0AEA5;
+    --dark: #141413;
+    --orange: #D97757;
+    --blue: #6A9BCC;
+    --green: #788C5D;
+    --muted: #6b6a64;
+    --serif: Georgia, "Iowan Old Style", "Times New Roman", "Apple SD Gothic Neo", "Malgun Gothic", serif;
+    --sans: -apple-system, "Segoe UI", Roboto, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  }
+  * { box-sizing: border-box; }
+
+  /* ---------- Board: ivory paper (fixed logical size, scaled to fit) ---------- */
+  .board {
+    position: absolute; left: 0; top: 0; transform-origin: 0 0;
+    overflow: hidden; border-radius: 10px;
+    background-color: var(--ivory);
+    background-image:
+      radial-gradient(rgba(20, 20, 19, .035) 1px, transparent 1.4px),
+      radial-gradient(rgba(217, 119, 87, .03) 1px, transparent 1.4px);
+    background-size: 6px 6px, 9px 9px;
+    background-position: 0 0, 3px 4px;
+    box-shadow: 0 1px 2px rgba(20, 20, 19, .06), 0 12px 32px rgba(20, 20, 19, .10);
+  }
+  .board-wrap { position: relative; flex: none; }
+
+  /* ---------- Dream cards on the board ---------- */
+  /* Each card gets a small, stable tilt; the tape takes the category colour. */
+  .el {
+    position: absolute; touch-action: none; user-select: none;
+    transform: rotate(var(--tilt, 0deg));
+  }
+  .card {
+    display: flex; flex-direction: column; background: #fff; padding: 14px 14px 12px;
+    box-shadow: 0 3px 10px rgba(20, 20, 19, .16);
+  }
+  .card::before {            /* washi tape */
+    content: ""; position: absolute; top: -16px; left: 50%; width: 38%; min-width: 60px; height: 34px;
+    transform: translateX(-50%) rotate(-3deg); z-index: 1; pointer-events: none;
+    background: var(--tape, var(--orange)); opacity: .78;
+  }
+  .card .photo { flex: 1; min-height: 0; }
+  .card .photo img {
+    display: block; width: 100%; height: 100%; object-fit: cover;
+    pointer-events: none; -webkit-user-drag: none;
+  }
+  .card.bare { padding-bottom: 44px; }       /* photo without title: classic polaroid */
+  .card .info { flex: none; padding: 10px 2px 0; }
+  .card .t {
+    font-family: var(--serif); font-size: 22px; line-height: 1.25; color: var(--dark);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .card .t.placeholder { color: rgba(20, 20, 19, .35); font-style: italic; }
+  .card .m {
+    display: flex; gap: 12px; margin-top: 5px; font-family: var(--sans); font-size: 14px;
+    color: var(--muted); white-space: nowrap; overflow: hidden;
+  }
+  .card .m .cat { display: flex; align-items: center; gap: 6px; }
+  .card .m .cat i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+  .card.text {
+    background: var(--paper, #F6E3D9); padding: 30px 26px 22px;
+    box-shadow: 0 3px 9px rgba(20, 20, 19, .12);
+  }
+  .card.text::before { width: 30%; }
+  .card.text .t { flex: none; font-size: 28px; line-height: 1.3; white-space: pre-wrap; word-break: break-word; }
+  .card.text .d {
+    flex: 1; min-height: 0; overflow: hidden; margin-top: 10px;
+    font-family: var(--serif); font-size: 18px; line-height: 1.5; color: #3f3e3a;
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .card.text .m { flex: none; margin-top: auto; padding-top: 12px; }
+
+  /* ---------- Board title (decoration, shown once per board) ---------- */
+  .heading {
+    position: absolute; transform: translateX(-50%); z-index: 100000;
+    padding: 4px 24px 14px; text-align: center; white-space: nowrap;
+    font-family: var(--serif); font-weight: normal; line-height: 1.1; color: var(--dark);
+    touch-action: none; user-select: none;
+  }
+  .heading::after {
+    content: ""; display: block; width: 1.3em; height: .075em; min-height: 3px;
+    margin: .25em auto 0; border-radius: 3px; background: var(--orange);
+  }
+</style>
+<style>
+  /* ---------- Editor-only styles ---------- */
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+  body {
+    font-family: var(--sans); color: var(--dark); background: #F0EEE6;
+    display: flex; flex-direction: column;
+  }
+
+  header {
+    flex: none; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 12px 24px; background: var(--ivory);
+    border-bottom: 1px solid var(--light);
+  }
+  .title {
+    font-family: var(--serif);
+    font-size: 24px; font-weight: normal; margin: 0 4px 0 0;
+    padding: 4px 8px; border-radius: 6px; cursor: text;
+    border: 1px solid transparent; max-width: 28vw;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .title:hover { border-color: var(--light); background: #fff; }
+  .title-input {
+    font-family: var(--serif); font-size: 24px;
+    margin: 0 4px 0 0; padding: 4px 8px; border-radius: 6px;
+    border: 1px solid var(--orange); background: #fff; color: inherit; width: 300px; outline: none;
+  }
+  .tabs { display: flex; background: #fff; border: 1px solid var(--light); border-radius: 9px; padding: 3px; }
+  .tabs button {
+    font: inherit; font-size: 14px; border: 0; background: none; color: var(--muted);
+    padding: 5px 16px; border-radius: 6px; cursor: pointer;
+  }
+  .tabs button.active { background: var(--dark); color: var(--ivory); }
+  .btn, .field {
+    font: inherit; font-size: 14px; color: var(--dark);
+    background: #fff; border: 1px solid var(--light); border-radius: 8px; padding: 7px 12px;
+  }
+  .btn { cursor: pointer; }
+  .btn:hover { border-color: var(--orange); color: #b85a3c; }
+  .btn.primary { background: var(--orange); border-color: var(--orange); color: #fff; }
+  .btn.primary:hover { background: #c96a4b; border-color: #c96a4b; color: #fff; }
+  .btn.danger { color: #b04a3a; }
+  .btn:disabled { opacity: .4; cursor: default; color: var(--dark); border-color: var(--light); }
+  .btn.icon { padding: 5px 12px; font-size: 18px; line-height: 1.2; }
+  .field { padding: 6px 10px; outline: none; }
+  select.field, input[type="date"].field { cursor: pointer; }
+  .field:focus { border-color: var(--orange); }
+  .sep { width: 1px; height: 24px; background: var(--light); margin: 0 4px; }
+  .spacer { flex: 1; }
+  .status { font-size: 13px; color: var(--muted); min-width: 70px; text-align: right; }
+  .status.error { color: #b04a3a; }
+
+  /* View switching: Board | Dreams */
+  body[data-view="dreams"] .stage,
+  body[data-view="dreams"] .board-only { display: none !important; }
+  body:not([data-view="dreams"]) .dreams-view { display: none; }
+  body[data-view="about"] .stage,
+  body[data-view="about"] .board-only,
+  body[data-view="about"] .board-ctx { display: none !important; }
+  body:not([data-view="about"]) .about-view { display: none; }
+
+  /* ---------- About view (intro shown on first visit) ---------- */
+  .about-view { flex: 1; overflow: auto; }
+  .about-view .page {
+    max-width: 820px; margin: 40px auto 60px; padding: 64px 72px;
+    line-height: 1.75; word-break: keep-all;
+    background-color: var(--ivory);
+    background-image:
+      radial-gradient(rgba(20, 20, 19, .035) 1px, transparent 1.4px),
+      radial-gradient(rgba(217, 119, 87, .03) 1px, transparent 1.4px);
+    background-size: 6px 6px, 9px 9px;
+    background-position: 0 0, 3px 4px;
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(20, 20, 19, .06), 0 12px 32px rgba(20, 20, 19, .10);
+  }
+  .about-view .eyebrow { color: var(--orange); letter-spacing: .2em; text-transform: uppercase; font-size: 13px; }
+  .about-view h1 { font-family: var(--serif); font-weight: normal; font-size: 46px; line-height: 1.15; margin: 8px 0 0; }
+  .about-view h1::after {
+    content: ""; display: block; width: 56px; height: 4px; background: var(--orange);
+    border-radius: 2px; margin-top: 22px;
+  }
+  .about-view .lead { font-size: 19px; margin: 28px 0 0; }
+  .about-view .lead cite { font-style: normal; font-weight: 600; }
+  .about-view .sub { color: var(--muted); margin: 12px 0 0; }
+  .about-view .cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 30px; }
+  .about-view .cta {
+    font: inherit; font-size: 16px; cursor: pointer; padding: 12px 24px; border-radius: 10px;
+    background: var(--orange); color: #fff; border: 1px solid var(--orange);
+  }
+  .about-view .cta:hover { background: #c96a4b; }
+  .about-view .cta.ghost { background: #fff; color: var(--dark); border-color: var(--light); }
+  .about-view .cta.ghost:hover { border-color: var(--orange); color: #b85a3c; }
+  .about-view h2 {
+    font-family: var(--serif); font-weight: normal; font-size: 28px;
+    margin: 64px 0 20px; display: flex; align-items: center; gap: 14px;
+  }
+  .about-view h2::before {
+    content: ""; width: 34px; height: 16px; background: var(--tape, var(--orange));
+    opacity: .78; transform: rotate(-4deg); flex: none;
+  }
+  .about-view h2.blue { --tape: var(--blue); }
+  .about-view h2.green { --tape: var(--green); }
+  .about-view .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 22px; margin: 0; padding: 0; list-style: none; counter-reset: step; }
+  .about-view .steps li {
+    counter-increment: step; position: relative;
+    background: #fff; padding: 26px 22px 22px; border-radius: 2px;
+    box-shadow: 0 3px 10px rgba(20, 20, 19, .10);
+  }
+  .about-view .steps li:nth-child(3n+1) { transform: rotate(-.8deg); }
+  .about-view .steps li:nth-child(3n+2) { transform: rotate(.6deg); }
+  .about-view .steps li:nth-child(3n)   { transform: rotate(-.4deg); }
+  .about-view .steps li::before {
+    content: counter(step); position: absolute; top: -14px; left: 18px;
+    width: 30px; height: 30px; border-radius: 50%; background: var(--orange); color: #fff;
+    font-family: var(--serif); font-size: 16px; display: flex; align-items: center; justify-content: center;
+  }
+  .about-view .steps b { display: block; font-family: var(--serif); font-weight: normal; font-size: 19px; margin-bottom: 6px; }
+  .about-view .steps p { margin: 0; color: #3f3e3a; font-size: 15px; }
+  .about-view table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  .about-view th, .about-view td { text-align: left; padding: 11px 4px; border-bottom: 1px solid var(--light); vertical-align: top; }
+  .about-view th { width: 38%; font-weight: normal; color: var(--muted); }
+  .about-view kbd {
+    font-family: var(--sans); font-size: 13px; background: #fff; border: 1px solid var(--light);
+    border-bottom-width: 2px; border-radius: 5px; padding: 1px 7px;
+  }
+  .about-view .about-note {
+    background: #F6E3D9; padding: 22px 26px; border-radius: 2px; transform: rotate(-.5deg);
+    box-shadow: 0 3px 9px rgba(20, 20, 19, .08);
+  }
+  .about-view .about-note ul { margin: 0; padding-left: 20px; }
+  .about-view .about-note li + li { margin-top: 6px; }
+  .about-view .about-foot {
+    margin-top: 64px; padding-top: 22px; border-top: 1px solid var(--light);
+    color: var(--muted); font-size: 13px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  }
+  .about-view .link { font: inherit; background: none; border: 0; padding: 0; color: var(--orange); text-decoration: underline; cursor: pointer; }
+  @media (max-width: 720px) {
+    .about-view .page { margin: 0; border-radius: 0; padding: 40px 24px; }
+    .about-view h1 { font-size: 36px; }
+  }
+
+  /* ---------- Header dropdown menus ---------- */
+  .menu-wrap { position: relative; }
+  .menu {
+    position: absolute; right: 0; top: calc(100% + 6px); z-index: 1100; min-width: 250px;
+    background: #fff; border: 1px solid var(--light); border-radius: 10px; padding: 6px;
+    box-shadow: 0 8px 24px rgba(20, 20, 19, .12);
+  }
+  .menu button, .menu a {
+    display: block; width: 100%; text-align: left; font: inherit; font-size: 14px; text-decoration: none;
+    background: none; border: 0; border-radius: 6px; padding: 8px 10px; cursor: pointer; color: var(--dark);
+  }
+  .menu button:hover, .menu a:hover { background: var(--ivory); }
+  .menu b { display: block; font-weight: 500; }
+  .menu small { display: block; color: var(--muted); font-size: 12px; margin-top: 1px; }
+  .menu-sep { height: 1px; background: var(--light); margin: 6px 4px; }
+  .menu .danger { color: #b04a3a; }
+  .menu .danger:hover { background: #fbeae4; }
+
+  /* ---------- Board stage ---------- */
+  .stage {
+    flex: 1; position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .board.dragover::after {
+    content: attr(data-drop-label); position: absolute; inset: 30px;
+    display: flex; align-items: center; justify-content: center;
+    border: 3px dashed var(--orange); border-radius: 14px;
+    color: var(--orange); font-size: 32px; font-family: var(--serif);
+    background: rgba(217, 119, 87, .06); pointer-events: none; z-index: 999999;
+  }
+  .empty {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; pointer-events: none;
+    color: var(--muted); text-align: center; line-height: 1.8; font-size: 20px;
+  }
+  .empty .big { font-family: var(--serif); font-size: 38px; color: var(--dark); margin-bottom: 6px; }
+  .empty .big::after {
+    content: ""; display: block; width: 56px; height: 4px; background: var(--orange);
+    margin: 14px auto 8px; border-radius: 2px;
+  }
+  .empty p { margin: 0; }
+  .empty .ctas { display: flex; gap: 12px; margin-top: 22px; }
+
+  /* Language switch (EN | 한국어) — pill in the header's top-right corner */
+  .lang {
+    display: flex; align-items: center; gap: 2px; padding: 3px;
+    background: #fff; border: 1.5px solid var(--dark); border-radius: 999px;
+  }
+  .lang button {
+    font: inherit; font-size: 13px; font-weight: 600; border: 0; background: none; color: var(--muted);
+    padding: 4px 12px; border-radius: 999px; cursor: pointer;
+  }
+  .lang button:hover { color: var(--dark); }
+  .lang button.active { background: var(--dark); color: var(--ivory); }
+  body[data-lang="en"] [data-lang-only="ko"],
+  body[data-lang="ko"] [data-lang-only="en"] { display: none !important; }
+  .empty .btn { pointer-events: auto; font-size: 18px; padding: 10px 20px; }
+
+  .el { cursor: grab; }
+  .el.dragging { cursor: grabbing; }
+  .el.selected { outline: 2px solid var(--orange); outline-offset: 6px; }
+  .el .resize, .heading .resize {
+    position: absolute; right: -10px; bottom: -10px; width: 18px; height: 18px; z-index: 3;
+    border-radius: 50%; background: #fff; border: 2px solid var(--orange);
+    cursor: nwse-resize; display: none;
+  }
+  .el:hover .resize, .el.selected .resize,
+  .heading:hover .resize, .heading.selected .resize { display: block; }
+  .heading { cursor: grab; }
+  .heading[hidden] { display: none; }
+  .heading.dragging { cursor: grabbing; }
+  .heading.selected { outline: 2px solid var(--orange); outline-offset: 4px; border-radius: 6px; }
+  .heading .text { outline: none; }
+  .heading.editing { cursor: text; }
+  .heading.editing .text { user-select: text; cursor: text; }
+  .heading.editing .resize { display: none; }
+
+  /* Floating toolbar above the selected card */
+  .sel-bar {
+    position: absolute; z-index: 50; display: flex; gap: 2px; padding: 4px;
+    background: var(--dark); border-radius: 9px; box-shadow: 0 6px 18px rgba(20, 20, 19, .25);
+  }
+  .sel-bar[hidden] { display: none; }
+  .sel-bar button {
+    font: inherit; font-size: 13px; color: var(--ivory); background: none; border: 0;
+    border-radius: 6px; padding: 6px 10px; cursor: pointer; white-space: nowrap;
+  }
+  .sel-bar button:hover { background: rgba(250, 249, 245, .12); }
+  .sel-bar .danger { color: #F2B39C; }
+  .sel-bar .bar-sep { width: 1px; background: rgba(250, 249, 245, .2); margin: 4px 2px; }
+  .sel-bar[data-mode="heading"] [data-for="card"],
+  .sel-bar[data-mode="card"] [data-for="heading"] { display: none; }
+
+  /* ---------- Dreams view ---------- */
+  .dreams-view { flex: 1; overflow: auto; }
+  .dwrap { max-width: 1280px; margin: 0 auto; padding: 36px 32px 60px; }
+  .topline { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+  .topline h2 { font-family: var(--serif); font-weight: normal; font-size: 38px; margin: 0; }
+  .topline h2 .count { color: var(--mid); font-size: 24px; margin-left: 6px; }
+  .topline p { margin: 6px 0 0; color: var(--muted); }
+  .topline .tools { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .topline .field { padding: 7px 12px; }
+  .search { width: 220px; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; margin: 26px 0 28px; }
+  .chip {
+    font: inherit; font-size: 13px; cursor: pointer; background: #fff; color: var(--dark);
+    border: 1px solid var(--light); border-radius: 999px; padding: 5px 13px; display: flex; align-items: center; gap: 6px;
+  }
+  .chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--c, var(--mid)); }
+  .chip .n { color: var(--mid); }
+  .chip.active { background: var(--dark); color: var(--ivory); border-color: var(--dark); }
+
+  .dgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 26px; }
+  .dcard {
+    position: relative; background: #fff; border-radius: 3px; cursor: pointer;
+    box-shadow: 0 3px 10px rgba(20, 20, 19, .10); display: flex; flex-direction: column;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .dcard:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(20, 20, 19, .14); }
+  .dcard::before {
+    content: ""; position: absolute; top: -9px; left: 50%; width: 70px; height: 20px; margin-left: -35px;
+    background: var(--c, var(--orange)); opacity: .75; transform: rotate(-3deg); z-index: 1;
+  }
+  .dcard .pic { margin: 10px 10px 0; aspect-ratio: 4 / 3; border-radius: 1px; }
+  .dcard .pic.text {
+    background: var(--paper, #F6E3D9); display: flex; align-items: center; justify-content: center;
+    font-family: var(--serif); font-size: 64px; color: rgba(20, 20, 19, .18);
+  }
+  .dcard .pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .dcard .body { padding: 14px 16px 10px; flex: 1; }
+  .dcard h3 { font-family: var(--serif); font-weight: normal; font-size: 20px; margin: 0; line-height: 1.25; word-break: break-word; }
+  .dcard .meta { margin-top: 6px; font-size: 13px; color: var(--muted); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .dcard .meta .cat { display: flex; align-items: center; gap: 5px; }
+  .dcard .meta .cat i { width: 7px; height: 7px; border-radius: 50%; background: var(--c); }
+  .dcard .meta .soon { color: #b85a3c; }
+  .dcard .desc {
+    margin: 8px 0 0; font-size: 14px; color: #3f3e3a; line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .dcard .foot { padding: 0 16px 14px; display: flex; gap: 8px; align-items: center; }
+  .dcard .foot .btn { padding: 5px 12px; font-size: 13px; }
+  .dcard .foot .used { font-size: 12px; color: var(--green); margin-left: auto; }
+  .new-card {
+    border: 2px dashed var(--mid); border-radius: 6px; min-height: 300px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    color: var(--muted); background: transparent; font: inherit;
+  }
+  .new-card:hover { border-color: var(--orange); color: #b85a3c; }
+  .new-card b { font-family: var(--serif); font-weight: normal; font-size: 40px; line-height: 1; }
+  .dreams-empty { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 60px 0; }
+
+  /* ---------- Dream dialog (shared by Board and Dreams) ---------- */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(20, 20, 19, .35); z-index: 2000;
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  .overlay[hidden] { display: none; }
+  .dialog {
+    width: 720px; max-width: 100%; max-height: 100%; overflow: auto;
+    background: var(--ivory); border-radius: 14px; box-shadow: 0 20px 50px rgba(20, 20, 19, .3);
+    display: grid; grid-template-columns: 260px 1fr; gap: 28px; padding: 28px;
+  }
+  .drop {
+    aspect-ratio: 3 / 4; border: 2px dashed var(--mid); border-radius: 6px; background: #fff;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+    color: var(--muted); font-size: 13px; line-height: 1.6; cursor: pointer; overflow: hidden; position: relative;
+  }
+  .drop.has { border-style: solid; border-color: #fff; box-shadow: 0 3px 10px rgba(20, 20, 19, .12); padding: 10px 10px 36px; }
+  .drop .img { width: 100%; height: 100%; }
+  .drop .img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .drop .remove { position: absolute; bottom: 8px; font-size: 12px; color: var(--muted); background: none; border: 0; cursor: pointer; text-decoration: underline; }
+  .drop.over { border-color: var(--orange); background: rgba(217, 119, 87, .06); }
+  .form h3 { font-family: var(--serif); font-weight: normal; font-size: 26px; margin: 0 0 18px; }
+  .form label { display: block; font-size: 13px; color: var(--muted); margin: 14px 0 5px; }
+  .form .field { width: 100%; padding: 7px 12px; }
+  .form textarea.field { resize: vertical; min-height: 80px; font-family: var(--sans); line-height: 1.5; }
+  .form .row { display: flex; gap: 10px; align-items: center; }
+  .form .row .field { flex: 1; }
+  .form .check { display: flex; gap: 6px; align-items: center; margin: 0; font-size: 14px; color: var(--dark); white-space: nowrap; cursor: pointer; }
+  .form .keep { margin-top: 18px; }
+  .form .keep[hidden] { display: none; }
+  .actions { display: flex; gap: 8px; margin-top: 26px; }
+
+  /* ---------- Archive panel ---------- */
+  .panel {
+    position: fixed; top: 0; right: 0; bottom: 0; width: 420px; max-width: 100vw; z-index: 1000;
+    background: var(--ivory); border-left: 1px solid var(--light);
+    box-shadow: -12px 0 32px rgba(20, 20, 19, .12);
+    display: flex; flex-direction: column;
+  }
+  .panel[hidden] { display: none; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px 4px; }
+  .panel-head h2 { font-family: var(--serif); font-weight: normal; font-size: 26px; margin: 0; }
+  .panel-sub { margin: 0; padding: 0 22px 14px; color: var(--muted); font-size: 14px; border-bottom: 1px solid var(--light); }
+  .archive-list { flex: 1; overflow: auto; padding: 4px 22px 30px; }
+  .archive-list .year { font-family: var(--serif); font-size: 22px; margin: 22px 0 2px; }
+  .archive-list .month { color: var(--orange); letter-spacing: .15em; text-transform: uppercase; font-size: 12px; margin: 14px 0 8px; }
+  .snap { background: #fff; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(20, 20, 19, .07); }
+  .snap-when { font-size: 14px; }
+  .snap-board { font-size: 13px; color: var(--muted); }
+  .snap-memo { font-family: var(--serif); font-style: italic; margin: 8px 0 0; white-space: pre-wrap; word-break: break-word; }
+  .snap-changes { margin: 8px 0 0; padding: 0; list-style: none; font-size: 14px; line-height: 1.5; }
+  .snap-changes .add { color: var(--green); }
+  .snap-changes .rm { color: #b04a3a; }
+  .snap-changes .same { color: var(--muted); }
+  .snap-actions { display: flex; gap: 6px; margin-top: 10px; }
+  .snap-actions .btn { padding: 4px 10px; font-size: 13px; }
+  .snap-empty { color: var(--muted); text-align: center; margin-top: 48px; line-height: 1.7; }
+
+  .toast {
+    position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 3000;
+    background: var(--dark); color: var(--ivory); padding: 10px 18px; border-radius: 10px; font-size: 14px;
+    box-shadow: 0 8px 24px rgba(20, 20, 19, .25); max-width: 90vw;
+  }
+  .toast[hidden] { display: none; }
+
+  @media (max-width: 680px) {
+    .dialog { grid-template-columns: 1fr; }
+    .drop { aspect-ratio: 4 / 3; }
+  }
+</style>
+</head>
+<body data-view="board">
+
+<header>
+  <h1 class="title" id="title" title="Click to rename" data-i18n-title="renameHint"></h1>
+  <div class="tabs">
+    <button data-view="board" class="active" data-i18n="tabBoard">Board</button>
+    <button data-view="dreams" data-i18n="tabDreams">Dreams</button>
+    <button data-view="about" data-i18n="tabAbout">About</button>
+  </div>
+  <input type="date" class="field board-ctx" id="date" title="Board date" data-i18n-title="boardDate">
+  <select class="field board-ctx" id="boards" title="Jump to a saved board" data-i18n-title="jumpBoard"></select>
+  <span class="sep board-only"></span>
+  <button class="btn board-only" id="addDream" data-i18n="addDream" data-i18n-title="addDreamHint">+ Dream</button>
+  <span class="spacer"></span>
+  <span class="status" id="status"></span>
+  <button class="btn" id="archiveBtn" data-i18n="archive">Archive</button>
+  <div class="menu-wrap">
+    <button class="btn primary" data-menu="keepMenu" aria-haspopup="true" data-i18n="keep">Keep ▾</button>
+    <div class="menu" id="keepMenu" hidden>
+      <button id="saveArchive"><b data-i18n="saveArchive">Save to archive…</b><small data-i18n="saveArchiveSub">Keep this version to look back on later</small></button>
+      <button id="publish"><b data-i18n="publish">Publish as HTML</b><small data-i18n="publishSub">Download a read-only copy to share</small></button>
+    </div>
+  </div>
+  <div class="menu-wrap">
+    <button class="btn icon" data-menu="moreMenu" title="More" aria-label="More" aria-haspopup="true" data-i18n-title="more">⋯</button>
+    <div class="menu" id="moreMenu" hidden>
+      <button id="openAbout"><b data-i18n="aboutMenu">About My Treasure Map</b><small data-i18n="aboutMenuSub">What this is and how to use it</small></button>
+      <div class="menu-sep"></div>
+      <button id="toggleHeading"><b>Hide board title</b><small data-i18n="titleMenuSub">The big title shown on the board</small></button>
+      <div class="menu-sep"></div>
+      <button id="clearBoard"><b data-i18n="clearBoard">Clear this board…</b></button>
+      <button id="resetAll" class="danger"><b data-i18n="resetAll">Delete all boards…</b></button>
+    </div>
+  </div>
+  <div class="lang" role="group" aria-label="Language / 언어">
+    <button data-lang="en" title="English">EN</button>
+    <button data-lang="ko" title="한국어">한국어</button>
+  </div>
+</header>
+
+<div class="stage" id="stage">
+  <div class="sel-bar" id="selBar" data-mode="card" hidden>
+    <button id="selEdit" data-for="card" data-i18n="selEdit" data-i18n-title="selEditHint">Edit</button>
+    <button id="selKeep" data-for="card" data-i18n="selKeep" data-i18n-title="selKeepHint">Save to Dreams</button>
+    <span class="bar-sep" data-for="card"></span>
+    <button id="toFront" data-for="card" data-i18n="toFront" data-i18n-title="toFront">Bring to front</button>
+    <button id="toBack" data-for="card" data-i18n="toBack" data-i18n-title="toBack">Send to back</button>
+    <span class="bar-sep" data-for="card"></span>
+    <button id="delete" data-for="card" class="danger" data-i18n="del" data-i18n-title="delHint">Delete</button>
+    <button id="selHeadEdit" data-for="heading" data-i18n="headEdit" data-i18n-title="headEditHint">Edit text</button>
+    <span class="bar-sep" data-for="heading"></span>
+    <button id="selHeadHide" data-for="heading" class="danger" data-i18n="headHide" data-i18n-title="headHideHint">Hide title</button>
+  </div>
+  <div class="board-wrap" id="boardWrap">
+    <div class="board" id="board">
+      <div class="empty" id="empty">
+        <div class="big" data-i18n="emptyBig">Pin your dreams here</div>
+        <p data-i18n-html="emptyText"></p>
+        <div class="ctas">
+          <button class="btn primary" id="emptyAdd" data-i18n="emptyAdd">+ Add a dream</button>
+          <button class="btn" id="copyFrom" hidden></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main class="dreams-view" id="dreamsView">
+  <div class="dwrap">
+    <div class="topline">
+      <div>
+        <h2><span data-i18n="dreamsTitle">Dreams</span><span class="count" id="dCount"></span></h2>
+        <p data-i18n="dreamsSub">Photos, words and ideas you're keeping for your treasure map.</p>
+      </div>
+      <div class="tools">
+        <input class="field search" id="dSearch" type="search" data-i18n-ph="search">
+        <select class="field" id="dSort">
+          <option value="when" data-i18n="sortWhen">Sort: Target date</option>
+          <option value="new" data-i18n="sortNew">Sort: Newest</option>
+          <option value="title" data-i18n="sortTitle">Sort: A–Z</option>
+        </select>
+        <button class="btn primary" id="dNew" data-i18n="newDream">+ New dream</button>
+      </div>
+    </div>
+    <div class="chips" id="dChips"></div>
+    <div class="dgrid" id="dGrid"></div>
+  </div>
+</main>
+
+<main class="about-view" id="aboutView">
+  <div class="page" data-lang-only="en" lang="en">
+    <div class="eyebrow">About</div>
+    <h1>My Treasure Map</h1>
+
+    <p class="lead">
+      My Treasure Map is a digital tool for making a treasure map — a vision board of your dreams —
+      inspired by Toshitaka Mochizuki's book <cite>《당신의 소중한 꿈을 이루는 보물지도》</cite> (Korean edition).
+    </p>
+    <p class="sub">
+      Pin photos and words for the dreams you want to come true on a single board, refresh it daily or monthly,
+      and publish the finished board as an HTML file to keep or share.
+    </p>
+
+    <div class="cta-row"><button class="cta" data-go="board">Start my treasure map →</button><button class="cta ghost" data-go="dreams">Browse Dreams</button></div>
+
+    <h2>How to use</h2>
+    <ol class="steps">
+      <li>
+        <b>Pick a date</b>
+        <p>Pick a date at the top to open that day's board. On a new date, start blank or copy your most recent board.</p>
+      </li>
+      <li>
+        <b>Style the board title</b>
+        <p>Your board's title appears large on the board. Double-click to edit it in place, drag to move it, and drag the round handle to resize it. You can also rename it from the header, and hide or show it from the <em>⋯</em> menu.</p>
+      </li>
+      <li>
+        <b>Create dream cards</b>
+        <p>Click <em>+ Dream</em> to open the dream card form. Add a photo, title, description, category and target date, then choose <em>Add to board</em>. Dropping a photo on the board or pasting one with <kbd>Ctrl</kbd>+<kbd>V</kbd> opens the form with that photo.</p>
+      </li>
+      <li>
+        <b>Dreams library</b>
+        <p>The <em>Dreams</em> tab keeps every dream, including ones not on a board yet. Search, filter by category or sort by target date, then use <em>Add to board</em> to copy one onto the current board. Board cards go the other way with <em>Save to Dreams</em>.</p>
+      </li>
+      <li>
+        <b>Arrange</b>
+        <p>Drag to move, and drag the round handle at the bottom right to resize. Select a card to get a small toolbar with <em>Edit</em>, <em>Save to Dreams</em>, <em>Bring to front</em>, <em>Send to back</em> and <em>Delete</em>. Double-click to edit right away.</p>
+      </li>
+      <li>
+        <b>Publish</b>
+        <p>Choose <em>Keep ▾ → Publish as HTML</em> to save the board as a single HTML file. Photos are embedded and the publish date is recorded, so it opens anywhere.</p>
+      </li>
+      <li>
+        <b>Keep it in your archive</b>
+        <p>When you want to remember this version, choose <em>Keep ▾ → Save to archive</em> and leave a note for your future self. In <em>Archive</em> you can look back by year and month and see which dreams appeared and which you let go.</p>
+      </li>
+    </ol>
+
+    <h2 class="blue">Shortcuts</h2>
+    <table>
+      <tr><th>Create a dream card from a photo</th><td><kbd>Ctrl</kbd>+<kbd>V</kbd> (<kbd>⌘</kbd>+<kbd>V</kbd> on Mac) or drop a photo</td></tr>
+      <tr><th>Delete the selected card</th><td><kbd>Delete</kbd> or <kbd>Backspace</kbd> (not while typing)</td></tr>
+      <tr><th>Edit the selected card</th><td><kbd>Enter</kbd> or double-click (<kbd>Esc</kbd> closes the form)</td></tr>
+      <tr><th>Edit the board title</th><td>Double-click (<kbd>Enter</kbd> saves, <kbd>Esc</kbd> cancels)</td></tr>
+      <tr><th>Clear the selection</th><td><kbd>Esc</kbd> or click an empty spot on the board</td></tr>
+      <tr><th>Resize a photo card freely</th><td>Hold <kbd>Shift</kbd> while dragging the resize handle</td></tr>
+    </table>
+
+    <h2 class="green">About saving</h2>
+    <div class="about-note">
+      <ul>
+        <li>Changes save automatically — you'll see <em>Saving…</em> and <em>Saved</em> at the top right.</li>
+        <li>Everything stays in this browser. Nothing is sent to a server.</li>
+        <li>A different browser or address means separate storage, so keep using the same one.</li>
+        <li>Clearing the browser's site data also deletes your boards. Publish the boards you care about and keep the files.</li>
+        <li>To start over, use the <em>⋯</em> menu at the top right. <em>Clear this board</em> clears only the date you're viewing;
+          <em>Delete all boards</em> removes every saved board. Neither can be undone. Your Dreams, archive and published HTML files stay.</li>
+      </ul>
+    </div>
+
+    <footer class="about-foot">
+      <span>My Treasure Map · works offline, nothing to install</span>
+      <button class="link" data-go="board">Start my treasure map →</button>
+    </footer>
+  </div>
+
+  <div class="page" data-lang-only="ko" lang="ko">
+    <div class="eyebrow">About</div>
+    <h1>나의 보물지도</h1>
+
+    <p class="lead">
+      이 앱은 모치즈키 도시타카의 <cite>《당신의 소중한 꿈을 이루는 보물지도》</cite>에서
+      아이디어를 얻은 디지털 보물지도 제작 도구입니다.
+    </p>
+    <p class="sub">
+      이루고 싶은 꿈을 담은 사진과 글을 한 장의 보드에 붙이고, 날마다 또는 달마다 새로 고치며,
+      완성된 보드를 HTML 파일로 발행해 간직하거나 공유할 수 있습니다.
+    </p>
+
+    <div class="cta-row"><button class="cta" data-go="board">보물지도 만들기 →</button><button class="cta ghost" data-go="dreams">꿈 보관함 보기</button></div>
+
+    <h2>사용법</h2>
+    <ol class="steps">
+      <li>
+        <b>날짜 고르기</b>
+        <p>상단의 날짜를 고르면 그 날짜의 보드가 열립니다. 새 날짜에서는 빈 보드로 시작하거나, 가장 최근 보드를 복사해서 시작할 수 있어요.</p>
+      </li>
+      <li>
+        <b>보드 타이틀 꾸미기</b>
+        <p>보드 위에 큰 제목이 나와요. 더블클릭해서 바로 고치고, 끌어서 옮기고, 오른쪽 아래 손잡이로 글자 크기를 조절하세요. 헤더의 제목을 클릭해도 바뀌고, <em>⋯</em> 메뉴에서 숨기거나 다시 보이게 할 수 있어요.</p>
+      </li>
+      <li>
+        <b>꿈 카드 만들기</b>
+        <p><em>+ 꿈</em>을 누르면 꿈 카드 폼이 열려요. 사진, 제목, 설명, 카테고리, 원하는 시기를 적고 <em>보드에 붙이기</em>를 누르세요. 사진을 보드로 끌어다 놓거나 <kbd>Ctrl</kbd>+<kbd>V</kbd>로 붙여 넣어도 사진이 담긴 폼이 열려요.</p>
+      </li>
+      <li>
+        <b>꿈 보관함</b>
+        <p>상단 <em>꿈 보관함</em> 탭은 아직 보드에 붙이지 않은 꿈까지 모아두는 곳이에요. 검색·카테고리·시기순으로 찾고, <em>보드에 붙이기</em>로 지금 보드에 복사해 붙여요. 보드의 카드도 <em>보관함에 저장</em>으로 보관함에 넣을 수 있어요.</p>
+      </li>
+      <li>
+        <b>배치하기</b>
+        <p>끌어서 옮기고, 오른쪽 아래 동그라미를 끌어 크기를 조절하세요. 카드를 선택하면 바로 위에 작은 툴바가 떠서 <em>수정</em>, <em>보관함에 저장</em>, <em>맨 앞으로</em>, <em>맨 뒤로</em>, <em>삭제</em>를 할 수 있어요. 더블클릭하면 바로 수정할 수 있어요.</p>
+      </li>
+      <li>
+        <b>발행하기</b>
+        <p><em>간직하기 ▾ → HTML로 발행</em>을 누르면 보드가 HTML 파일 한 개로 저장됩니다. 사진이 파일 안에 들어 있고 발행 일시도 기록되어, 어디서든 열어볼 수 있어요.</p>
+      </li>
+      <li>
+        <b>아카이브에 간직하기</b>
+        <p>지금의 보물지도를 남겨두고 싶을 때 <em>간직하기 ▾ → 아카이브에 간직하기</em>를 누르고, 미래의 나에게 한마디를 적어두세요. <em>아카이브</em>에서 연도·월별로 돌아보며 어떤 꿈이 새로 생기고 어떤 꿈을 내려놓았는지 볼 수 있어요.</p>
+      </li>
+    </ol>
+
+    <h2 class="blue">단축키와 조작</h2>
+    <table>
+      <tr><th>사진으로 꿈 카드 만들기</th><td><kbd>Ctrl</kbd>+<kbd>V</kbd> (Mac은 <kbd>⌘</kbd>+<kbd>V</kbd>) 또는 사진 끌어다 놓기</td></tr>
+      <tr><th>선택한 카드 삭제</th><td><kbd>Delete</kbd> 또는 <kbd>Backspace</kbd> (글을 입력하는 중에는 동작하지 않아요)</td></tr>
+      <tr><th>선택한 카드 수정</th><td><kbd>Enter</kbd> 또는 더블클릭 (폼은 <kbd>Esc</kbd>로 닫기)</td></tr>
+      <tr><th>보드 타이틀 고치기</th><td>더블클릭 (<kbd>Enter</kbd> 저장, <kbd>Esc</kbd> 취소)</td></tr>
+      <tr><th>선택 해제</th><td><kbd>Esc</kbd> 또는 보드의 빈 곳 클릭</td></tr>
+      <tr><th>사진 카드 비율 무시하고 크기 조절</th><td><kbd>Shift</kbd>를 누른 채로 크기 손잡이 끌기</td></tr>
+    </table>
+
+    <h2 class="green">저장에 대해</h2>
+    <div class="about-note">
+      <ul>
+        <li>모든 변경은 자동으로 저장됩니다. 상단 오른쪽에 <em>저장 중…</em>과 <em>저장됨</em>으로 표시돼요.</li>
+        <li>보드는 이 브라우저 안에만 저장되며, 서버로 전송되지 않습니다.</li>
+        <li>브라우저가 다르거나 여는 주소가 다르면 저장 공간도 달라요. 한 곳에서 계속 사용하세요.</li>
+        <li>브라우저의 사이트 데이터를 지우면 보드도 함께 지워집니다. 소중한 보드는 발행해서 파일로 보관하세요.</li>
+        <li>처음부터 다시 하고 싶다면 오른쪽 위 <em>⋯</em> 메뉴를 쓰세요. <em>이 보드 비우기</em>는 지금 보고 있는 날짜의 보드만,
+          <em>모든 보드 삭제</em>는 저장된 모든 보드를 지웁니다. 되돌릴 수 없어요. 꿈 보관함, 아카이브, 이미 발행한 HTML 파일은 그대로 남아요.</li>
+      </ul>
+    </div>
+
+    <footer class="about-foot">
+      <span>나의 보물지도 · 설치나 인터넷 연결 없이 동작합니다</span>
+      <button class="link" data-go="board">보물지도 만들기 →</button>
+    </footer>
+  </div>
+</main>
+
+<aside class="panel" id="archivePanel" hidden>
+  <div class="panel-head"><h2 data-i18n="archive">Archive</h2><button class="btn" id="closeArchive" data-i18n="close">Close</button></div>
+  <p class="panel-sub" data-i18n="archiveSub">Versions of your treasure map you chose to keep — so you can look back on how your dreams changed.</p>
+  <div class="archive-list" id="archiveList"></div>
+</aside>
+
+<div class="overlay" id="overlay" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="formTitle">
+    <div>
+      <div class="drop" id="drop"></div>
+      <input type="file" id="formFile" accept="image/*" hidden>
+    </div>
+    <div class="form">
+      <h3 id="formTitle">New dream</h3>
+      <label for="fTitle" data-i18n="fTitle">Dream title</label>
+      <input class="field" id="fTitle" maxlength="80" data-i18n-ph="fTitlePh">
+      <label for="fDesc" data-i18n="fDesc">Description</label>
+      <textarea class="field" id="fDesc" data-i18n-ph="fDescPh"></textarea>
+      <label for="fCat" data-i18n="fCat">Category</label>
+      <input class="field" id="fCat" list="catList" maxlength="30" data-i18n-ph="fCatPh">
+      <datalist id="catList"></datalist>
+      <label for="fWhen" data-i18n="fWhen">When do you want this?</label>
+      <div class="row">
+        <input class="field" id="fWhen" type="month">
+        <label class="check"><input type="checkbox" id="fSomeday"> <span data-i18n="someday">Someday</span></label>
+      </div>
+      <label class="check keep" id="keepRow"><input type="checkbox" id="fKeep"> <span data-i18n="fKeep">Also keep in Dreams</span></label>
+      <div class="actions">
+        <button class="btn danger" id="formDelete">Delete</button>
+        <span class="spacer"></span>
+        <button class="btn" id="formCancel" data-i18n="cancel">Cancel</button>
+        <button class="btn primary" id="formSave">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+  'use strict';
+
+  // The board has a fixed logical size (A1 landscape, 841:594) and is scaled
+  // with CSS to fit the window. All card coordinates are in board units,
+  // so the layout stays the same on any screen size (and in published files).
+  const BOARD_W = 1682, BOARD_H = 1188;
+  const MIN_SIZE = 60;
+  const MAX_IMAGE_EDGE = 1200;
+  const THUMB_EDGE = 480;
+  // (the default board title now comes from t('defaultTitle'))
+  const LEGACY_KEY = 'treasure-map:v1';          // single-board localStorage format
+  const KEEP_PREF_KEY = 'treasure-map:alsoKeepInDreams';
+  const INTRO_SEEN_KEY = 'treasure-map:introSeen';
+  const VIEWS = ['board', 'dreams', 'about'];
+  const TAPES = ['#D97757', '#6A9BCC', '#788C5D'];
+  const PAPERS = ['#F6E3D9', '#E8E6DC', '#DDE7F1'];
+  const CATEGORIES = {
+    Health: '#788C5D', Career: '#D97757', Relationships: '#C98B7A', Travel: '#6A9BCC',
+    Home: '#B8966E', Growth: '#8FA37A', Money: '#B0AEA5', Fun: '#8EB4D9',
+  };
+  const catColor = c => CATEGORIES[c] || '#B0AEA5';
+
+  // ================= Language (English / 한국어) =================
+  const LANG_KEY = 'treasure-map:lang';
+  /** Korean labels for the built-in categories. Stored values stay English so filters and colours never change. */
+  const CAT_KO = {
+    Health: '건강', Career: '커리어', Relationships: '관계', Travel: '여행',
+    Home: '집', Growth: '성장', Money: '재정', Fun: '즐거움',
+  };
+  const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+  const I18N = {
+    en: {
+      defaultTitle: 'My Treasure Map',
+      renameHint: 'Click to rename',
+      tabBoard: 'Board', tabDreams: 'Dreams', tabAbout: 'About',
+      boardDate: 'Board date', jumpBoard: 'Jump to a saved board',
+      savedBoards: n => `Saved boards (${n})`,
+      addDream: '+ Dream', addDreamHint: 'Add a dream card (you can also drop or paste a photo)',
+      archive: 'Archive', keep: 'Keep ▾',
+      saveArchive: 'Save to archive…', saveArchiveSub: 'Keep this version to look back on later',
+      publish: 'Publish as HTML', publishSub: 'Download a read-only copy to share',
+      more: 'More',
+      aboutMenu: 'About My Treasure Map', aboutMenuSub: 'What this is and how to use it',
+      hideTitle: 'Hide board title', showTitle: 'Show board title', titleMenuSub: 'The big title shown on the board',
+      clearBoard: 'Clear this board…', resetAll: 'Delete all boards…',
+      selEdit: 'Edit', selEditHint: 'Edit (Enter or double-click)',
+      selKeep: 'Save to Dreams', selKeepHint: 'Copy this card into Dreams',
+      toFront: 'Bring to front', toBack: 'Send to back',
+      del: 'Delete', delHint: 'Delete (Del / Backspace)',
+      headEdit: 'Edit text', headEditHint: 'Edit the title (Enter or double-click)',
+      headHide: 'Hide title', headHideHint: 'Hide the title (Del / Backspace)',
+      resizeHint: 'Drag to resize',
+      dropHere: 'Drop your photo here',
+      emptyBig: 'Pin your dreams here',
+      emptyText: 'Click <b>+ Dream</b>, drop a photo onto the board, or paste one with Ctrl+V / ⌘V.<br>Or bring in dreams you\'ve kept in <b>Dreams</b>.',
+      emptyAdd: '+ Add a dream',
+      startFrom: d => `Start from the ${d} board`,
+      dreamsTitle: 'Dreams', dreamsSub: 'Photos, words and ideas you\'re keeping for your treasure map.',
+      search: 'Search dreams…',
+      sortWhen: 'Sort: Target date', sortNew: 'Sort: Newest', sortTitle: 'Sort: A–Z',
+      newDream: '+ New dream', newDreamCard: 'New dream',
+      all: 'All', untitled: 'Untitled dream', addToBoard: 'Add to board', onBoard: '✓ on this board',
+      noMatch: 'No dreams match. Try another word or category.',
+      someday: 'Someday',
+      byWhen: (y, m, label) => `By ${label}`,
+      emptyCard: 'Empty card',
+      close: 'Close',
+      archiveSub: 'Versions of your treasure map you chose to keep — so you can look back on how your dreams changed.',
+      formNew: 'New dream', formEdit: 'Edit dream',
+      fTitle: 'Dream title', fTitlePh: 'e.g. Live by the sea for a month',
+      fDesc: 'Description', fDescPh: 'Why it matters, what it looks like…',
+      fCat: 'Category', fCatPh: 'Choose or type your own',
+      fWhen: 'When do you want this?', fKeep: 'Also keep in Dreams',
+      cancel: 'Cancel', save: 'Save', removeFromBoard: 'Remove from board',
+      dropPrompt: 'Click to add a photo<br>or drop / paste one here<br><br><small>Optional — a dream can be just words</small>',
+      removePhoto: 'Remove photo',
+      needTitle: 'Add a title or a photo first.',
+      addedKept: 'Added to the board and kept in Dreams', added: 'Added to the board',
+      cardUpdated: 'Card updated', dreamUpdated: 'Dream updated', dreamSaved: 'Dream saved', dreamDeleted: 'Dream deleted',
+      couldNotSave: msg => `Could not save — ${msg}`,
+      confirmDeleteDream: title => `Delete “${title}” from Dreams?\n\nCopies already on your boards stay.`,
+      thisDream: 'this dream',
+      alreadyInDreams: 'This dream is already in Dreams', savedToDreams: 'Saved to Dreams',
+      saveToDreamsFail: 'Could not save to Dreams', loadDreamsFail: 'Could not load Dreams',
+      photoMissing: 'Could not find this photo',
+      addedToBoard: d => `Added to the ${d} board`, addFail: 'Could not add to the board',
+      loading: 'Still loading…', saving: 'Saving…', saved: 'Saved', saveFail: 'Could not save',
+      otherTab: 'Updated in another tab — please reload', closeTabs: 'Close other Treasure Map tabs',
+      blockedAlert: 'My Treasure Map was updated.\n\nPlease close any other tabs where it is open — this page will continue automatically.',
+      storageFail: 'Storage unavailable',
+      readError: name => `Could not read image: ${name}`, pastedImage: 'pasted image',
+      confirmClear: d => `Clear the ${d} board?\n\nAll cards on it will be removed. Your Dreams are not affected. This can't be undone.`,
+      boardCleared: 'Board cleared', clearFail: 'Could not clear',
+      resetPrompt: n => `This deletes all ${plural(n, 'saved board')} permanently. Your Dreams, archive and published HTML files are kept.\n\nType RESET to confirm.`,
+      nothingDeleted: 'Nothing was deleted.', allDeleted: 'All boards deleted', resetFail: 'Could not reset',
+      publishEmpty: 'This board is empty. Publish anyway?',
+      publishedAt: time => `Published ${time}`,
+      archiveEmptyBoard: 'This board is empty — add a dream first.',
+      archivePrompt: 'Save this treasure map to your archive.\n\nA note for your future self (optional):',
+      archived: 'Saved to archive', archiveFail: 'Could not archive',
+      snapEmpty: 'Nothing archived yet.<br>Choose <b>Keep ▾ → Save to archive</b> when your map feels right —<br>it will wait here for your future self.',
+      boardOf: (title, d) => `${title} · board of ${d}`,
+      view: 'View', download: 'Download',
+      firstMap: (n, m) => `First saved map · ${plural(n, 'dream')}` + (m ? `, ${plural(m, 'untitled photo')}` : ''),
+      untitledPhotos: n => plural(n, 'untitled photo'),
+      sameDreams: 'Same dreams as the previous version',
+      confirmDeleteSnap: 'Delete this archived version? This can\'t be undone.',
+      titleHidden: 'Board title hidden — show it again from the ⋯ menu',
+      pubLabel: 'Published', archLabel: 'Saved to archive',
+    },
+    ko: {
+      defaultTitle: '나의 보물지도',
+      renameHint: '클릭해서 이름 바꾸기',
+      tabBoard: '보드', tabDreams: '꿈 보관함', tabAbout: '소개',
+      boardDate: '보드 날짜', jumpBoard: '저장된 보드로 이동',
+      savedBoards: n => `저장된 보드 (${n})`,
+      addDream: '+ 꿈', addDreamHint: '꿈 카드 추가 (사진을 끌어다 놓거나 붙여 넣어도 돼요)',
+      archive: '아카이브', keep: '간직하기 ▾',
+      saveArchive: '아카이브에 간직하기…', saveArchiveSub: '나중에 돌아볼 수 있게 이 버전을 보관해요',
+      publish: 'HTML로 발행', publishSub: '공유용 보기 전용 파일을 내려받아요',
+      more: '더보기',
+      aboutMenu: '나의 보물지도 소개', aboutMenuSub: '무엇이고 어떻게 쓰는지',
+      hideTitle: '보드 타이틀 숨기기', showTitle: '보드 타이틀 보이기', titleMenuSub: '보드 위에 크게 보이는 제목',
+      clearBoard: '이 보드 비우기…', resetAll: '모든 보드 삭제…',
+      selEdit: '수정', selEditHint: '수정 (Enter 또는 더블클릭)',
+      selKeep: '보관함에 저장', selKeepHint: '이 카드를 꿈 보관함에 복사',
+      toFront: '맨 앞으로', toBack: '맨 뒤로',
+      del: '삭제', delHint: '삭제 (Del / Backspace)',
+      headEdit: '글자 수정', headEditHint: '타이틀 수정 (Enter 또는 더블클릭)',
+      headHide: '타이틀 숨기기', headHideHint: '타이틀 숨기기 (Del / Backspace)',
+      resizeHint: '끌어서 크기 조절',
+      dropHere: '여기에 사진을 놓으세요',
+      emptyBig: '여기에 꿈을 붙여보세요',
+      emptyText: '<b>+ 꿈</b>을 누르거나, 사진을 보드에 끌어다 놓거나, Ctrl+V / ⌘V로 붙여 넣으세요.<br><b>꿈 보관함</b>에 모아둔 꿈을 가져올 수도 있어요.',
+      emptyAdd: '+ 꿈 추가하기',
+      startFrom: d => `${d} 보드에서 시작하기`,
+      dreamsTitle: '꿈 보관함', dreamsSub: '보물지도에 쓰려고 모아둔 사진, 문장, 아이디어예요.',
+      search: '꿈 검색…',
+      sortWhen: '정렬: 원하는 시기', sortNew: '정렬: 최신순', sortTitle: '정렬: 이름순',
+      newDream: '+ 새 꿈', newDreamCard: '새 꿈',
+      all: '전체', untitled: '제목 없는 꿈', addToBoard: '보드에 붙이기', onBoard: '✓ 이 보드에 있음',
+      noMatch: '맞는 꿈이 없어요. 다른 단어나 카테고리로 찾아보세요.',
+      someday: '언젠가',
+      byWhen: (y, m) => `${y}년 ${m}월까지`,
+      emptyCard: '빈 카드',
+      close: '닫기',
+      archiveSub: '간직하기로 한 보물지도 버전들이에요. 꿈이 어떻게 바뀌어 왔는지 돌아볼 수 있어요.',
+      formNew: '새 꿈', formEdit: '꿈 수정',
+      fTitle: '꿈 제목', fTitlePh: '예: 바닷가에서 한 달 살기',
+      fDesc: '설명', fDescPh: '왜 중요한지, 어떤 모습인지…',
+      fCat: '카테고리', fCatPh: '고르거나 직접 입력',
+      fWhen: '언제 이루고 싶나요?', fKeep: '꿈 보관함에도 저장',
+      cancel: '취소', save: '저장', removeFromBoard: '보드에서 빼기',
+      dropPrompt: '클릭해서 사진 추가<br>또는 끌어다 놓기 / 붙여 넣기<br><br><small>선택 사항이에요 — 글만으로도 꿈이 돼요</small>',
+      removePhoto: '사진 빼기',
+      needTitle: '제목이나 사진을 먼저 넣어 주세요.',
+      addedKept: '보드에 붙이고 꿈 보관함에도 저장했어요', added: '보드에 붙였어요',
+      cardUpdated: '카드를 수정했어요', dreamUpdated: '꿈을 수정했어요', dreamSaved: '꿈을 저장했어요', dreamDeleted: '꿈을 삭제했어요',
+      couldNotSave: msg => `저장하지 못했어요 — ${msg}`,
+      confirmDeleteDream: title => `“${title}”을(를) 꿈 보관함에서 삭제할까요?\n\n이미 보드에 붙인 카드는 그대로 남아요.`,
+      thisDream: '이 꿈',
+      alreadyInDreams: '이미 꿈 보관함에 있어요', savedToDreams: '꿈 보관함에 저장했어요',
+      saveToDreamsFail: '꿈 보관함에 저장하지 못했어요', loadDreamsFail: '꿈 보관함을 불러오지 못했어요',
+      photoMissing: '사진을 찾을 수 없어요',
+      addedToBoard: d => `${d} 보드에 붙였어요`, addFail: '보드에 붙이지 못했어요',
+      loading: '불러오는 중…', saving: '저장 중…', saved: '저장됨', saveFail: '저장 실패',
+      otherTab: '다른 탭에서 업데이트됨 — 새로고침해 주세요', closeTabs: '다른 보물지도 탭을 닫아 주세요',
+      blockedAlert: '나의 보물지도가 업데이트됐어요.\n\n이 앱이 열린 다른 탭을 모두 닫아 주세요. 닫으면 이 페이지가 자동으로 이어서 열려요.',
+      storageFail: '저장소를 쓸 수 없어요',
+      readError: name => `이미지를 읽을 수 없어요: ${name}`, pastedImage: '붙여 넣은 이미지',
+      confirmClear: d => `${d} 보드를 비울까요?\n\n보드의 카드가 모두 지워져요. 꿈 보관함은 그대로예요. 되돌릴 수 없어요.`,
+      boardCleared: '보드를 비웠어요', clearFail: '비우지 못했어요',
+      resetPrompt: n => `저장된 보드 ${n}개를 모두 영구 삭제해요. 꿈 보관함, 아카이브, 발행한 HTML 파일은 남아요.\n\n확인하려면 RESET을 입력하세요.`,
+      nothingDeleted: '아무것도 삭제하지 않았어요.', allDeleted: '모든 보드를 삭제했어요', resetFail: '초기화하지 못했어요',
+      publishEmpty: '보드가 비어 있어요. 그래도 발행할까요?',
+      publishedAt: time => `${time} 발행됨`,
+      archiveEmptyBoard: '보드가 비어 있어요 — 먼저 꿈을 붙여 주세요.',
+      archivePrompt: '이 보물지도를 아카이브에 간직해요.\n\n미래의 나에게 남길 한마디 (선택):',
+      archived: '아카이브에 간직했어요', archiveFail: '아카이브하지 못했어요',
+      snapEmpty: '아직 간직한 버전이 없어요.<br>보물지도가 마음에 들 때 <b>간직하기 ▾ → 아카이브에 간직하기</b>를 누르세요.<br>미래의 나를 위해 여기서 기다릴게요.',
+      boardOf: (title, d) => `${title} · ${d} 보드`,
+      view: '보기', download: '다운로드',
+      firstMap: (n, m) => `처음 간직한 보물지도 · 꿈 ${n}개` + (m ? `, 제목 없는 사진 ${m}장` : ''),
+      untitledPhotos: n => `제목 없는 사진 ${n}장`,
+      sameDreams: '이전 버전과 같은 꿈이에요',
+      confirmDeleteSnap: '이 버전을 삭제할까요? 되돌릴 수 없어요.',
+      titleHidden: '보드 타이틀을 숨겼어요 — ⋯ 메뉴에서 다시 보이게 할 수 있어요',
+      pubLabel: '발행', archLabel: '아카이브에 간직함',
+    },
+  };
+  let lang = localStorage.getItem(LANG_KEY) || ((navigator.language || '').toLowerCase().startsWith('ko') ? 'ko' : 'en');
+  if (!I18N[lang]) lang = 'en';
+  /** Looks up a UI string in the current language (falls back to English); function entries take arguments. */
+  function t(key, ...args) {
+    const v = I18N[lang][key] ?? I18N.en[key] ?? key;
+    return typeof v === 'function' ? v(...args) : v;
+  }
+  const locale = () => (lang === 'ko' ? 'ko-KR' : 'en-US');
+  const catLabel = c => (lang === 'ko' && CAT_KO[c]) || c;
+  /** Maps a typed category (English or Korean label) back to its stored key; custom categories pass through. */
+  function catFromInput(v) {
+    if (!v) return '';
+    const key = Object.keys(CATEGORIES).find(k => k.toLowerCase() === v.toLowerCase() || CAT_KO[k] === v);
+    return key || v;
+  }
+
+  const $ = id => document.getElementById(id);
+  const stage = $('stage'), boardWrap = $('boardWrap'), boardEl = $('board');
+  const emptyMsg = $('empty'), statusEl = $('status'), titleEl = $('title');
+  const dateInput = $('date'), boardsSelect = $('boards'), copyBtn = $('copyFrom');
+  const selBar = $('selBar');
+
+  /**
+   * A dream card. Board cards and Dreams share these fields; board cards add a position.
+   * @typedef {{ title: string, desc: string, category: string, when: string|null }} DreamFields
+   * @typedef {DreamFields & { id: string, x: number, y: number, width: number, height: number,
+   *   zIndex: number, createdAt: number, photo: string|null, ratio: number|null, dreamId?: string }} BoardCard
+   *   photo: image data URL (or "img:<hash>" inside archive snapshots)
+   * @typedef {DreamFields & { id: string, photo: string|null, ratio: number|null, thumb: string|null,
+   *   createdAt: number, updatedAt: number }} Dream
+   *   photo: "img:<hash>" reference into the images store
+   * @typedef {{ date: string, title: string, elements: BoardCard[],
+   *   createdAt: number, updatedAt: number, publishedAt?: number }} Board
+   */
+  /** @type {Board} */
+  let board;
+  let savedDates = [];        // dates (YYYY-MM-DD) that have a stored board, sorted
+  let selectedId = null;
+  let scale = 1;
+  let view = 'board';
+  let headingSelected = false;   // the board title (not a card) is selected
+
+  /** The big board title's placement: centre x, top y, font size (board units). */
+  const HEADING_DEFAULT = { cx: BOARD_W / 2, y: 40, size: 68, hidden: false };
+  const headingOf = b => ({ ...HEADING_DEFAULT, ...(b.heading || {}) });
+
+  /** False until the first board has loaded from storage. */
+  const ready = () => {
+    if (board) return true;
+    setStatus(t('loading'));
+    return false;
+  };
+
+  // ================= Storage (IndexedDB) =================
+  // boards: one record per date · snapshots: archived versions · images: photos stored once by hash · dreams: the Dreams library
+  const dbPromise = new Promise((resolve, reject) => {
+    const req = indexedDB.open('treasure-map-boards', 3);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains('boards')) db.createObjectStore('boards', { keyPath: 'date' });
+      if (!db.objectStoreNames.contains('snapshots')) db.createObjectStore('snapshots', { keyPath: 'id' });
+      if (!db.objectStoreNames.contains('images')) db.createObjectStore('images', { keyPath: 'hash' });
+      if (!db.objectStoreNames.contains('dreams')) db.createObjectStore('dreams', { keyPath: 'id' });
+    };
+    req.onsuccess = () => {
+      const db = req.result;
+      // If a newer version of the app opens in another tab, step aside so its upgrade isn't blocked.
+      db.onversionchange = () => {
+        db.close();
+        setStatus(t('otherTab'), true);
+      };
+      resolve(db);
+    };
+    req.onerror = () => reject(req.error);
+    // An older copy of the app open in another tab keeps the old database version locked.
+    req.onblocked = () => {
+      setStatus(t('closeTabs'), true);
+      alert(t('blockedAlert'));
+    };
+  });
+
+  async function dbRequest(mode, fn, store = 'boards') {
+    const db = await dbPromise;
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(store, mode);
+      const req = fn(tx.objectStore(store));
+      tx.oncomplete = () => resolve(req.result);
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+  }
+  const getBoard = date => dbRequest('readonly', s => s.get(date));
+  const putBoard = b => dbRequest('readwrite', s => s.put(b));
+  const listDates = () => dbRequest('readonly', s => s.getAllKeys());
+  const deleteBoard = date => dbRequest('readwrite', s => s.delete(date));
+  const deleteAllBoards = () => dbRequest('readwrite', s => s.clear());
+  const listSnapshots = () => dbRequest('readonly', s => s.getAll(), 'snapshots');
+  const putSnapshot = snap => dbRequest('readwrite', s => s.put(snap), 'snapshots');
+  const deleteSnapshot = id => dbRequest('readwrite', s => s.delete(id), 'snapshots');
+  const getImage = hash => dbRequest('readonly', s => s.get(hash), 'images');
+  const hasImage = hash => dbRequest('readonly', s => s.count(hash), 'images');
+  const putImage = (hash, src) => dbRequest('readwrite', s => s.put({ hash, src }), 'images');
+  const listDreams = () => dbRequest('readonly', s => s.getAll(), 'dreams');
+  const getDream = id => dbRequest('readonly', s => s.get(id), 'dreams');
+  const putDream = d => dbRequest('readwrite', s => s.put(d), 'dreams');
+  const deleteDreamRecord = id => dbRequest('readwrite', s => s.delete(id), 'dreams');
+
+  let saveTimer = null, dirty = null;
+  function setStatus(text, isError = false) {
+    statusEl.textContent = text;
+    statusEl.classList.toggle('error', isError);
+  }
+  async function flush() {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    const b = dirty;
+    dirty = null;
+    if (!b) return;
+    try {
+      b.updatedAt = Date.now();
+      await putBoard(b);
+      if (!savedDates.includes(b.date)) {
+        savedDates = [...savedDates, b.date].sort();
+        renderBoardList();
+      }
+      if (!dirty) setStatus(t('saved'));
+    } catch (e) {
+      console.error(e);
+      setStatus(t('saveFail'), true);
+    }
+  }
+  function scheduleSave() {
+    dirty = board;
+    setStatus(t('saving'));
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(flush, 300);
+  }
+  window.addEventListener('beforeunload', () => { if (dirty) flush(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden && dirty) flush(); });
+
+  // ================= Helpers =================
+  const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  const find = id => board.elements.find(el => el.id === id);
+  const maxZ = () => board.elements.reduce((m, el) => Math.max(m, el.zIndex), 0);
+  const minZ = () => board.elements.reduce((m, el) => Math.min(m, el.zIndex), Infinity);
+  const isTyping = () => {
+    const a = document.activeElement;
+    return a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.tagName === 'SELECT' || a.isContentEditable);
+  };
+  const pad2 = n => String(n).padStart(2, '0');
+  const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; };
+  const prettyDate = s => new Date(s + 'T00:00:00').toLocaleDateString(locale(), { year: 'numeric', month: 'long', day: 'numeric' });
+  const shortDate = s => new Date(s + 'T00:00:00').toLocaleDateString(locale(), { month: 'short', day: 'numeric', year: 'numeric' });
+  const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  /** "2027-06" → "By Jun 2027" / "2027년 6월까지"; empty → "" (or "Someday" when asked). */
+  function whenText(when, someday = false) {
+    if (!when) return someday ? t('someday') : '';
+    const [y, m] = when.split('-').map(Number);
+    return t('byWhen', y, m, new Date(y, m - 1, 1).toLocaleDateString(locale(), { month: 'short', year: 'numeric' }));
+  }
+
+  function hash(s) {
+    let h = 0;
+    for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+    return Math.abs(h);
+  }
+
+  /** Converts older saved elements ({type:'image'|'note', content}) into dream cards. */
+  function normalizeEl(el) {
+    const base = {
+      id: el.id, x: el.x, y: el.y, width: el.width, height: el.height, zIndex: el.zIndex,
+      createdAt: el.createdAt || Date.now(),
+      photo: null, ratio: null, title: '', desc: '', category: '', when: null,
+    };
+    if (el.type === 'image') return { ...base, photo: el.content };
+    if (el.type === 'note') {
+      const lines = (el.content || '').trim().split('\n');
+      return { ...base, title: (lines.shift() || '').trim(), desc: lines.join('\n').trim() };
+    }
+    return { ...base, ...el };
+  }
+
+  const hasInfo = el => !!(el.title || el.category || el.when);
+
+  /** Stable decorative tilt + colours per card, so it looks hand-pinned but never jumps around. */
+  function decoVars(el) {
+    const h = hash(el.id);
+    const c = el.category ? catColor(el.category) : null;
+    return {
+      '--tilt': ((h % 7) - 3) * 0.8 + 'deg',
+      '--tape': c || TAPES[h % TAPES.length],
+      '--c': c || 'var(--mid)',
+      '--paper': c ? `color-mix(in srgb, ${c} 20%, #FAF9F5)` : PAPERS[h % PAPERS.length],
+    };
+  }
+  const cardClass = el => 'el card ' + (el.photo ? (hasInfo(el) ? 'has-photo' : 'has-photo bare') : 'text');
+
+  function metaHtml(el) {
+    const parts = [];
+    if (el.category) parts.push(`<span class="cat"><i></i>${escapeHtml(catLabel(el.category))}</span>`);
+    if (el.when) parts.push(`<span>${whenText(el.when)}</span>`);
+    return parts.length ? `<div class="m">${parts.join('')}</div>` : '';
+  }
+
+  /** Inner markup of a card — used both on the live board and in published HTML. */
+  function cardInner(el) {
+    if (el.photo) {
+      const info = hasInfo(el)
+        ? `<div class="info">${el.title ? `<div class="t">${escapeHtml(el.title)}</div>` : ''}${metaHtml(el)}</div>`
+        : '';
+      return `<div class="photo"><img src="${el.photo}" alt="" draggable="false"></div>${info}`;
+    }
+    if (!el.title && !el.desc) return `<div class="t placeholder">${t('emptyCard')}</div>${metaHtml(el)}`;
+    return (el.title ? `<div class="t">${escapeHtml(el.title)}</div>` : '')
+      + (el.desc ? `<div class="d">${escapeHtml(el.desc)}</div>` : '')
+      + metaHtml(el);
+  }
+
+  /** Default size for a card of the given width (photo cards follow the photo's aspect ratio). */
+  function cardSize(el, width) {
+    if (el.photo) {
+      const r = el.ratio || 0.75;
+      return { width, height: Math.round((width - 28) * r) + 14 + (hasInfo(el) ? 70 : 44) };
+    }
+    return { width, height: el.desc ? 260 : 190 };
+  }
+
+  function blankBoard(date) {
+    return { date, title: t('defaultTitle'), elements: [], createdAt: Date.now(), updatedAt: Date.now() };
+  }
+
+  function centerSpot(w, h) {
+    const jitter = () => Math.random() * 160 - 80;
+    return { x: Math.round(BOARD_W / 2 - w / 2 + jitter()), y: Math.round(BOARD_H / 2 - h / 2 + jitter()) };
+  }
+
+  function toBoard(clientX, clientY) {
+    const r = boardEl.getBoundingClientRect();
+    return { x: (clientX - r.left) / scale, y: (clientY - r.top) / scale };
+  }
+
+  function clampToBoard(el) {
+    const keep = 40; // always leave at least 40 units visible
+    el.x = Math.round(Math.min(Math.max(el.x, keep - el.width), BOARD_W - keep));
+    el.y = Math.round(Math.min(Math.max(el.y, 0), BOARD_H - keep));
+  }
+
+  function loadImg(src) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('Could not read image'));
+      img.src = src;
+    });
+  }
+
+  /** Draws an image scaled to fit maxEdge and returns a JPEG data URL. */
+  function toJpeg(img, maxEdge, quality) {
+    const s = Math.min(1, maxEdge / Math.max(img.width, img.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(img.width * s);
+    canvas.height = Math.round(img.height * s);
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff'; // flatten transparent PNGs onto the white frame colour
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg', quality);
+  }
+
+  /** Reads an image file, downscales it and returns a JPEG data URL plus its aspect ratio. */
+  async function readImage(file) {
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await loadImg(url);
+      return { src: toJpeg(img, MAX_IMAGE_EDGE, 0.85), ratio: img.height / img.width };
+    } catch {
+      throw new Error(t('readError', file.name || t('pastedImage')));
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  const makeThumb = async src => toJpeg(await loadImg(src), THUMB_EDGE, 0.75);
+
+  /** Fast 64-bit string hash (cyrb53-style) plus length, used as an image key. */
+  function imageKey(src) {
+    let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+    for (let i = 0; i < src.length; i++) {
+      const c = src.charCodeAt(i);
+      h1 = Math.imul(h1 ^ c, 2654435761);
+      h2 = Math.imul(h2 ^ c, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    return (h2 >>> 0).toString(16).padStart(8, '0') + (h1 >>> 0).toString(16).padStart(8, '0') + '-' + src.length.toString(36);
+  }
+
+  /** Stores a photo once in the images store and returns its "img:<hash>" reference. */
+  async function storeImage(src) {
+    const key = imageKey(src);
+    if (!(await hasImage(key))) await putImage(key, src);
+    return 'img:' + key;
+  }
+  async function resolveImage(ref) {
+    if (!ref || !ref.startsWith('img:')) return ref;
+    const rec = await getImage(ref.slice(4));
+    return rec ? rec.src : null;
+  }
+
+  let toastTimer;
+  function toast(msg) {
+    const box = $('toast');
+    box.textContent = msg;
+    box.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { box.hidden = true; }, 2800);
+  }
+
+  // ================= Switching boards by date =================
+  async function openDate(date) {
+    if (!date) return;
+    await flush();
+    const stored = await getBoard(date);
+    board = stored ? { ...stored, elements: stored.elements.map(normalizeEl) } : blankBoard(date);
+    selectedId = null;
+    headingSelected = false;
+    dateInput.value = date;
+    renderBoardList();
+    renderTitle();
+    render();
+    setStatus(savedDates.includes(date) ? t('saved') : '');
+    if (view === 'dreams') renderDreams();
+  }
+
+  /** The board to offer as a starting point: the latest saved one before this date, else the latest overall. */
+  function copySource() {
+    const others = savedDates.filter(d => d !== board.date);
+    const before = others.filter(d => d < board.date);
+    return before.length ? before[before.length - 1] : others[others.length - 1];
+  }
+
+  async function copyFromBoard(date) {
+    const src = await getBoard(date);
+    if (!src) return;
+    board.title = src.title;
+    board.heading = src.heading ? { ...src.heading } : undefined;
+    board.elements = structuredClone(src.elements).map(normalizeEl);
+    renderTitle();
+    render();
+    scheduleSave();
+  }
+
+  function renderBoardList() {
+    const opts = [`<option value="">${t('savedBoards', savedDates.length)}</option>`]
+      .concat([...savedDates].reverse().map(d =>
+        `<option value="${d}"${d === board?.date ? ' selected' : ''}>${shortDate(d)}</option>`));
+    boardsSelect.innerHTML = opts.join('');
+    if (!savedDates.includes(board?.date)) boardsSelect.value = '';
+  }
+
+  dateInput.addEventListener('change', () => openDate(dateInput.value));
+  boardsSelect.addEventListener('change', () => { if (boardsSelect.value) openDate(boardsSelect.value); boardsSelect.blur(); });
+  copyBtn.addEventListener('click', () => { if (copyBtn.dataset.date) copyFromBoard(copyBtn.dataset.date); });
+
+  // ================= Reset =================
+  function showBlank(date, status) {
+    board = blankBoard(date);
+    selectedId = null;
+    headingSelected = false;
+    dateInput.value = date;
+    renderBoardList();
+    renderTitle();
+    render();
+    setStatus(status);
+  }
+
+  /** Removes the current date's board entirely (it disappears from "Saved boards"). */
+  async function clearCurrentBoard() {
+    if (!ready()) return;
+    if (!board.elements.length && !savedDates.includes(board.date)) return;
+    if (!confirm(t('confirmClear', shortDate(board.date)))) return;
+    await flush();
+    try {
+      await deleteBoard(board.date);
+      savedDates = savedDates.filter(d => d !== board.date);
+      showBlank(board.date, t('boardCleared'));
+    } catch (e) {
+      console.error(e);
+      setStatus(t('clearFail'), true);
+    }
+  }
+
+  /** Deletes every saved board (and the old localStorage copy) and starts fresh on today. */
+  async function resetEverything() {
+    if (!ready()) return;
+    const n = savedDates.length;
+    const answer = prompt(t('resetPrompt', n));
+    if (answer === null) return;
+    if (answer.trim().toUpperCase() !== 'RESET') { alert(t('nothingDeleted')); return; }
+    await flush();
+    try {
+      await deleteAllBoards();
+      localStorage.removeItem(LEGACY_KEY);
+      localStorage.removeItem(LEGACY_KEY + ':migrated');
+      savedDates = [];
+      showBlank(todayStr(), t('allDeleted'));
+    } catch (e) {
+      console.error(e);
+      setStatus(t('resetFail'), true);
+    }
+  }
+  $('clearBoard').addEventListener('click', clearCurrentBoard);
+  $('resetAll').addEventListener('click', resetEverything);
+
+  // ================= Adding / removing cards =================
+  /** Places a new card on the current board. `fields` may include photo/ratio/dreamId. */
+  function addCard(fields, dropPoint) {
+    const draft = { photo: null, ratio: null, title: '', desc: '', category: '', when: null, ...fields };
+    const { width, height } = cardSize(draft, draft.photo ? 300 : 280);
+    const pos = dropPoint
+      ? { x: Math.round(dropPoint.x - width / 2), y: Math.round(dropPoint.y - height / 2) }
+      : centerSpot(width, height);
+    const el = { id: uid(), ...pos, width, height, zIndex: maxZ() + 1, createdAt: Date.now(), ...draft };
+    clampToBoard(el);
+    board.elements.push(el);
+    selectedId = el.id;
+    render();
+    scheduleSave();
+    return el;
+  }
+
+  /** Several photos dropped at once become untitled cards straight away (details can be added later). */
+  async function addPhotoCards(files, dropPoint) {
+    if (!ready()) return;
+    const target = board;
+    let offset = 0;
+    for (const file of files) {
+      try {
+        const { src, ratio } = await readImage(file);
+        if (target !== board) return; // the user switched date mid-upload
+        const point = dropPoint ? { x: dropPoint.x + offset, y: dropPoint.y + offset } : null;
+        addCard({ photo: src, ratio }, point);
+        offset += 30;
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+  }
+
+  function deleteSelected() {
+    if (!selectedId) return;
+    board.elements = board.elements.filter(el => el.id !== selectedId);
+    selectedId = null;
+    render();
+    scheduleSave();
+  }
+
+  function bringToFront() {
+    const el = find(selectedId);
+    if (!el) return;
+    el.zIndex = maxZ() + 1;
+    render(); scheduleSave();
+  }
+
+  function sendToBack() {
+    const el = find(selectedId);
+    if (!el) return;
+    el.zIndex = minZ() - 1;
+    render(); scheduleSave();
+  }
+
+  // ================= Rendering =================
+  const nodes = new Map(); // id -> DOM node (for the current board)
+
+  function fillNode(node, el) {
+    node.className = cardClass(el);
+    for (const [k, v] of Object.entries(decoVars(el))) node.style.setProperty(k, v);
+    node.innerHTML = cardInner(el) + `<div class="resize" title="${t('resizeHint')}"></div>`;
+    node.classList.toggle('selected', el.id === selectedId);
+  }
+
+  function createNode(el) {
+    const node = document.createElement('div');
+    node.dataset.id = el.id;
+    fillNode(node, el);
+    node.addEventListener('pointerdown', e => {
+      if (e.target.closest('.resize')) startResize(e, el.id);
+      else startDrag(e, el.id);
+    });
+    node.addEventListener('dblclick', () => openBoardEdit(el.id));
+    return node;
+  }
+
+  function place(node, el) {
+    node.style.left = el.x + 'px';
+    node.style.top = el.y + 'px';
+    node.style.width = el.width + 'px';
+    node.style.height = el.height + 'px';
+    node.style.zIndex = el.zIndex;
+  }
+
+  function render() {
+    const alive = new Set();
+    for (const el of board.elements) {
+      alive.add(el.id);
+      let node = nodes.get(el.id);
+      if (node && node._el !== el) { node.remove(); node = null; } // same id, different board object
+      if (!node) {
+        node = createNode(el);
+        node._el = el;
+        nodes.set(el.id, node);
+        boardEl.appendChild(node);
+      }
+      place(node, el);
+      node.classList.toggle('selected', el.id === selectedId);
+    }
+    for (const [id, node] of nodes) {
+      if (!alive.has(id)) { node.remove(); nodes.delete(id); }
+    }
+
+    const isEmpty = board.elements.length === 0;
+    emptyMsg.style.display = isEmpty ? 'flex' : 'none';
+    const src = isEmpty ? copySource() : null;
+    copyBtn.hidden = !src;
+    if (src) {
+      copyBtn.dataset.date = src;
+      copyBtn.textContent = t('startFrom', shortDate(src));
+    }
+    renderHeading();
+    updateToolbar();
+  }
+
+  /** Re-draws a card's content after its details changed. */
+  function refreshNode(el) {
+    const node = nodes.get(el.id);
+    if (node) { fillNode(node, el); place(node, el); }
+  }
+
+  /** Shows the floating toolbar just above the selected card (or below it near the top edge). */
+  function updateToolbar() {
+    let node = null;
+    if (board && view === 'board') {
+      if (headingSelected) node = !headingEditing && !headingOf(board).hidden ? headingEl : null;
+      else if (selectedId) node = nodes.get(selectedId);
+    }
+    if (!node) { selBar.hidden = true; return; }
+    selBar.dataset.mode = node === headingEl ? 'heading' : 'card';
+    selBar.hidden = false;
+    const s = stage.getBoundingClientRect(), r = node.getBoundingClientRect();
+    const w = selBar.offsetWidth, barH = selBar.offsetHeight;
+    let top = r.top - s.top - barH - 14;
+    if (top < 8) top = r.bottom - s.top + 14;
+    const left = Math.min(Math.max(r.left - s.left + r.width / 2 - w / 2, 8), s.width - w - 8);
+    selBar.style.top = Math.round(top) + 'px';
+    selBar.style.left = Math.round(left) + 'px';
+  }
+  selBar.addEventListener('pointerdown', e => e.stopPropagation());
+
+  function select(id) {
+    if (selectedId === id && !headingSelected) return;
+    headingSelected = false;
+    selectedId = id;
+    render();
+  }
+
+  // ================= Board title on the board (decoration, one per board) =================
+  // Same text as the header title; can be moved, resized (font size), edited in place or hidden.
+  const headingEl = document.createElement('div');
+  headingEl.className = 'heading';
+  headingEl.hidden = true;
+  headingEl.innerHTML = '<span class="text"></span><div class="resize" title="Drag to resize"></div>';
+  boardEl.appendChild(headingEl);
+  const headingText = headingEl.querySelector('.text');
+  let headingEditing = false;
+
+  function renderHeading() {
+    if (!board) return;
+    const hd = headingOf(board);
+    headingEl.hidden = hd.hidden;
+    headingEl.style.left = hd.cx + 'px';
+    headingEl.style.top = hd.y + 'px';
+    headingEl.style.fontSize = hd.size + 'px';
+    if (!headingEditing) headingText.textContent = board.title;
+    headingEl.classList.toggle('selected', headingSelected);
+    $('toggleHeading').querySelector('b').textContent = t(hd.hidden ? 'showTitle' : 'hideTitle');
+    headingEl.querySelector('.resize').title = t('resizeHint');
+  }
+
+  function setHeading(patch) {
+    board.heading = { ...headingOf(board), ...patch };
+    render();
+    scheduleSave();
+  }
+
+  function hideHeading() {
+    headingSelected = false;
+    setHeading({ hidden: true });
+    toast(t('titleHidden'));
+  }
+
+  headingEl.addEventListener('pointerdown', e => {
+    if (e.button !== 0 || headingEditing) return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (!headingSelected) { selectedId = null; headingSelected = true; render(); }
+    const hd = headingOf(board);
+    const resizing = !!e.target.closest('.resize');
+    const startX = e.clientX, startY = e.clientY, origW = headingEl.offsetWidth;
+    let moved = false;
+    headingEl.setPointerCapture(e.pointerId);
+
+    const move = ev => {
+      const dx = (ev.clientX - startX) / scale, dy = (ev.clientY - startY) / scale;
+      if (!moved && Math.hypot(ev.clientX - startX, ev.clientY - startY) < 4) return;
+      if (!moved) { moved = true; selBar.hidden = true; headingEl.classList.add('dragging'); }
+      if (resizing) {
+        // the title is centred, so the handle moves by half of the width change
+        const size = Math.round(Math.min(180, Math.max(24, hd.size * (origW + 2 * dx) / origW)));
+        board.heading = { ...hd, size };
+        headingEl.style.fontSize = size + 'px';
+      } else {
+        const cx = Math.round(Math.min(BOARD_W, Math.max(0, hd.cx + dx)));
+        const y = Math.round(Math.min(BOARD_H - 40, Math.max(0, hd.y + dy)));
+        board.heading = { ...hd, cx, y };
+        headingEl.style.left = cx + 'px';
+        headingEl.style.top = y + 'px';
+      }
+    };
+    const up = () => {
+      headingEl.removeEventListener('pointermove', move);
+      headingEl.removeEventListener('pointerup', up);
+      headingEl.removeEventListener('pointercancel', up);
+      headingEl.classList.remove('dragging');
+      if (moved) scheduleSave();
+      updateToolbar();
+    };
+    headingEl.addEventListener('pointermove', move);
+    headingEl.addEventListener('pointerup', up);
+    headingEl.addEventListener('pointercancel', up);
+  });
+
+  function editHeading() {
+    if (!board || headingEditing || headingOf(board).hidden) return;
+    headingEditing = true;
+    headingSelected = true;
+    selBar.hidden = true;
+    headingEl.classList.add('editing', 'selected');
+    headingText.contentEditable = 'plaintext-only';
+    if (headingText.contentEditable !== 'plaintext-only') headingText.contentEditable = 'true';
+    headingText.focus();
+    const range = document.createRange();
+    range.selectNodeContents(headingText);
+    const sel = getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  function finishHeadingEdit(commit) {
+    if (!headingEditing) return;
+    headingEditing = false;
+    headingText.contentEditable = 'false';
+    headingEl.classList.remove('editing');
+    if (commit) {
+      const next = headingText.textContent.replace(/\s+/g, ' ').trim().slice(0, 80) || t('defaultTitle');
+      if (next !== board.title) { board.title = next; scheduleSave(); }
+    }
+    renderTitle();   // updates the header and the heading text
+    updateToolbar();
+  }
+
+  headingEl.addEventListener('dblclick', editHeading);
+  headingText.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); finishHeadingEdit(true); headingText.blur(); }
+    else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); finishHeadingEdit(false); headingText.blur(); }
+  });
+  headingText.addEventListener('blur', () => finishHeadingEdit(true));
+
+  $('selHeadEdit').addEventListener('click', editHeading);
+  $('selHeadHide').addEventListener('click', hideHeading);
+  $('toggleHeading').addEventListener('click', () => {
+    if (!ready()) return;
+    if (headingOf(board).hidden) {
+      setView('board');
+      headingSelected = true;
+      selectedId = null;
+      setHeading({ hidden: false });
+    } else {
+      hideHeading();
+    }
+  });
+
+  // ================= Drag to move =================
+  function startDrag(e, id) {
+    if (e.button !== 0) return;
+    const el = find(id);
+    const node = nodes.get(id);
+    if (!el || !node) return;
+    e.preventDefault();
+    select(id);
+
+    const startX = e.clientX, startY = e.clientY, origX = el.x, origY = el.y;
+    let moved = false;
+    node.setPointerCapture(e.pointerId);
+
+    const move = ev => {
+      const dx = (ev.clientX - startX) / scale, dy = (ev.clientY - startY) / scale;
+      if (!moved && Math.hypot(ev.clientX - startX, ev.clientY - startY) < 4) return;
+      if (!moved) { moved = true; node.classList.add('dragging'); selBar.hidden = true; }
+      el.x = Math.round(origX + dx);
+      el.y = Math.round(origY + dy);
+      place(node, el);
+    };
+    const up = () => {
+      node.removeEventListener('pointermove', move);
+      node.removeEventListener('pointerup', up);
+      node.removeEventListener('pointercancel', up);
+      node.classList.remove('dragging');
+      if (moved) {
+        clampToBoard(el);
+        place(node, el);
+        updateToolbar();
+        scheduleSave();
+      }
+    };
+    node.addEventListener('pointermove', move);
+    node.addEventListener('pointerup', up);
+    node.addEventListener('pointercancel', up);
+  }
+
+  // ================= Resize (bottom-right handle) =================
+  function startResize(e, id) {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const el = find(id);
+    const node = nodes.get(id);
+    if (!el || !node) return;
+    select(id);
+
+    const handle = e.target.closest('.resize');
+    const startX = e.clientX, startY = e.clientY, origW = el.width, origH = el.height;
+    const ratio = origH / origW;
+    handle.setPointerCapture(e.pointerId);
+
+    const move = ev => {
+      selBar.hidden = true;
+      const dx = (ev.clientX - startX) / scale, dy = (ev.clientY - startY) / scale;
+      if (el.photo && !ev.shiftKey) {
+        // photo cards keep their shape (hold Shift to stretch freely)
+        el.width = Math.max(MIN_SIZE, Math.round(origW + dx));
+        el.height = Math.round(el.width * ratio);
+      } else {
+        el.width = Math.max(MIN_SIZE, Math.round(origW + dx));
+        el.height = Math.max(MIN_SIZE, Math.round(origH + dy));
+      }
+      place(node, el);
+    };
+    const up = () => {
+      handle.removeEventListener('pointermove', move);
+      handle.removeEventListener('pointerup', up);
+      handle.removeEventListener('pointercancel', up);
+      updateToolbar();
+      scheduleSave();
+    };
+    handle.addEventListener('pointermove', move);
+    handle.addEventListener('pointerup', up);
+    handle.addEventListener('pointercancel', up);
+  }
+
+  // Clicking empty space clears the selection.
+  boardEl.addEventListener('pointerdown', e => {
+    if (e.target === boardEl || e.target === emptyMsg) select(null);
+  });
+  stage.addEventListener('pointerdown', e => {
+    if (e.target === stage || e.target === boardWrap) select(null);
+  });
+
+  // ================= Selection toolbar =================
+  $('selEdit').addEventListener('click', () => { if (selectedId) openBoardEdit(selectedId); });
+  $('selKeep').addEventListener('click', () => { const el = find(selectedId); if (el) saveCardToDreams(el); });
+  $('toFront').addEventListener('click', bringToFront);
+  $('toBack').addEventListener('click', sendToBack);
+  $('delete').addEventListener('click', deleteSelected);
+
+  // ================= Keyboard =================
+  document.addEventListener('keydown', e => {
+    if (!overlay.hidden) { if (e.key === 'Escape') closeForm(); return; }
+    if (e.key === 'Escape') closeMenus();
+    if (isTyping()) return; // never delete cards while typing
+    if (e.key === 'Escape') {
+      if (!archivePanel.hidden) archivePanel.hidden = true;
+      else if (view === 'board' && board) select(null);
+      return;
+    }
+    if (view !== 'board' || !board) return;
+    if (headingSelected) {
+      if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); hideHeading(); }
+      else if (e.key === 'Enter') { e.preventDefault(); editHeading(); }
+      return;
+    }
+    if (!selectedId) return;
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      e.preventDefault();
+      deleteSelected();
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      openBoardEdit(selectedId);
+    }
+  });
+
+  // ================= Add dreams: button, drag & drop, paste =================
+  $('addDream').addEventListener('click', () => { if (ready()) openForm({ mode: 'board-new' }); });
+  $('emptyAdd').addEventListener('click', () => { if (ready()) openForm({ mode: 'board-new' }); });
+
+  const imageFiles = list => [...(list || [])].filter(f => f && f.type.startsWith('image/'));
+  let dragDepth = 0;
+  const hasFiles = e => [...(e.dataTransfer?.types || [])].includes('Files');
+  stage.addEventListener('dragenter', e => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    dragDepth++;
+    boardEl.classList.add('dragover');
+  });
+  stage.addEventListener('dragover', e => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+  });
+  stage.addEventListener('dragleave', () => {
+    dragDepth = Math.max(0, dragDepth - 1);
+    if (!dragDepth) boardEl.classList.remove('dragover');
+  });
+  stage.addEventListener('drop', e => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    dragDepth = 0;
+    boardEl.classList.remove('dragover');
+    if (!ready()) return;
+    const files = imageFiles(e.dataTransfer.files);
+    if (!files.length) return;
+    const p = toBoard(e.clientX, e.clientY);
+    const point = p.x >= 0 && p.y >= 0 && p.x <= BOARD_W && p.y <= BOARD_H ? p : null;
+    // One photo → fill in the dream card; several → pin them now, details later.
+    if (files.length === 1) openForm({ mode: 'board-new', dropPoint: point }, files[0]);
+    else addPhotoCards(files, point);
+  });
+  $('dreamsView').addEventListener('drop', e => {
+    const files = imageFiles(e.dataTransfer?.files);
+    if (!files.length) return;
+    e.preventDefault();
+    openForm({ mode: 'dream-new' }, files[0]);
+  });
+  // Stop the browser from navigating to a file dropped anywhere else.
+  window.addEventListener('dragover', e => e.preventDefault());
+  window.addEventListener('drop', e => e.preventDefault());
+
+  document.addEventListener('paste', e => {
+    const item = [...(e.clipboardData?.items || [])].find(i => i.kind === 'file' && i.type.startsWith('image/'));
+    const file = item && item.getAsFile();
+    if (!overlay.hidden) {                 // the dialog is open: the photo goes into the form
+      if (file) { e.preventDefault(); takeFormFile(file); }
+      return;
+    }
+    if (!file || isTyping() || view === 'about') return;   // normal text paste
+    e.preventDefault();
+    if (view === 'dreams') openForm({ mode: 'dream-new' }, file);
+    else if (ready()) openForm({ mode: 'board-new' }, file);
+  });
+
+  // ================= Editable title =================
+  function renderTitle() {
+    titleEl.textContent = board.title;
+    document.title = board.title;
+    renderHeading();
+  }
+  titleEl.addEventListener('click', () => {
+    if (!ready()) return;
+    const input = document.createElement('input');
+    input.className = 'title-input';
+    input.value = board.title;
+    input.maxLength = 80;
+    let done = false;
+    const finish = commit => {
+      if (done) return;
+      done = true;
+      const next = input.value.trim() || t('defaultTitle');
+      if (commit && next !== board.title) {
+        board.title = next;
+        scheduleSave();
+      }
+      input.replaceWith(titleEl);
+      renderTitle();
+    };
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') finish(true);
+      else if (e.key === 'Escape') finish(false);
+    });
+    input.addEventListener('blur', () => finish(true));
+    titleEl.replaceWith(input);
+    input.focus();
+    input.select();
+  });
+
+  // ================= Dream dialog (shared by Board and Dreams) =================
+  // ctx.mode: 'board-new' | 'board-edit' (ctx.id) | 'dream-new' | 'dream-edit' (ctx.dream)
+  const overlay = $('overlay'), drop = $('drop'), formFile = $('formFile');
+  const fTitle = $('fTitle'), fDesc = $('fDesc'), fCat = $('fCat'), fWhen = $('fWhen'), fSomeday = $('fSomeday'), fKeep = $('fKeep');
+  // (category suggestions are filled in by applyI18n, in the current language)
+  let formCtx = null;
+  /** null | { src?: data URL, ref?: "img:<hash>", thumb?: data URL, ratio } */
+  let formPhoto = null;
+  let formToken = 0;
+
+  function openForm(ctx, file) {
+    formCtx = ctx;
+    formToken++;
+    const src = ctx.mode === 'board-edit' ? find(ctx.id) : ctx.mode === 'dream-edit' ? ctx.dream : null;
+    fTitle.value = src ? src.title : '';
+    fDesc.value = src ? src.desc : '';
+    fCat.value = src ? catLabel(src.category) : '';
+    fWhen.value = src && src.when ? src.when : '';
+    fSomeday.checked = !!src && !src.when;
+    fWhen.disabled = fSomeday.checked;
+    formPhoto = null;
+    if (src && src.photo) {
+      formPhoto = ctx.mode === 'board-edit'
+        ? { src: src.photo, ratio: src.ratio || (src.height - (hasInfo(src) ? 84 : 58)) / (src.width - 28) }
+        : { ref: src.photo, thumb: src.thumb, ratio: src.ratio };
+    }
+    $('formDelete').hidden = ctx.mode.endsWith('new');
+    labelForm(ctx);
+    $('keepRow').hidden = ctx.mode !== 'board-new';
+    fKeep.checked = localStorage.getItem(KEEP_PREF_KEY) !== '0';
+    renderDrop();
+    overlay.hidden = false;
+    if (file) takeFormFile(file);
+    fTitle.focus();
+  }
+
+  function closeForm() {
+    overlay.hidden = true;
+    formCtx = null;
+    formPhoto = null;
+  }
+
+  function renderDrop() {
+    const shown = formPhoto && (formPhoto.src || formPhoto.thumb);
+    drop.classList.toggle('has', !!shown);
+    drop.innerHTML = shown
+      ? `<div class="img"><img src="${shown}" alt=""></div><button class="remove" id="removePhoto" type="button">${t('removePhoto')}</button>`
+      : `<div>${t('dropPrompt')}</div>`;
+  }
+
+  async function takeFormFile(file) {
+    if (!file || !file.type.startsWith('image/')) return;
+    const token = formToken;
+    try {
+      const { src, ratio } = await readImage(file);
+      if (token !== formToken || overlay.hidden) return; // dialog was closed or reopened meanwhile
+      formPhoto = { src, ratio };
+      renderDrop();
+    } catch (e) {
+      alert(e.message);
+    }
+  }
+
+  fSomeday.addEventListener('change', () => { fWhen.disabled = fSomeday.checked; if (fSomeday.checked) fWhen.value = ''; });
+  $('formCancel').addEventListener('click', closeForm);
+  overlay.addEventListener('pointerdown', e => { if (e.target === overlay) closeForm(); });
+  drop.addEventListener('click', e => {
+    if (e.target.id === 'removePhoto') { formPhoto = null; renderDrop(); return; }
+    formFile.click();
+  });
+  formFile.addEventListener('change', () => { takeFormFile(formFile.files[0]); formFile.value = ''; });
+  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+  drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+  drop.addEventListener('drop', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    drop.classList.remove('over');
+    takeFormFile(imageFiles(e.dataTransfer.files)[0]);
+  });
+
+  function formFields() {
+    return {
+      title: fTitle.value.trim(),
+      desc: fDesc.value.trim(),
+      category: catFromInput(fCat.value.trim()),
+      when: fSomeday.checked ? null : (fWhen.value || null),
+    };
+  }
+
+  /** Creates or updates a Dream record from dialog fields and a photo (data URL or existing ref). */
+  async function saveDream(existing, fields, photo) {
+    let ref = null, thumb = null, ratio = null;
+    if (photo) {
+      ratio = photo.ratio || null;
+      if (photo.ref) { ref = photo.ref; thumb = photo.thumb; }
+      else { ref = await storeImage(photo.src); thumb = await makeThumb(photo.src); }
+    }
+    const now = Date.now();
+    const dream = { ...(existing || { id: uid(), createdAt: now }), ...fields, photo: ref, thumb, ratio, updatedAt: now };
+    await putDream(dream);
+    if (existing && existing.photo && existing.photo !== ref) await pruneImages();
+    return dream;
+  }
+
+  $('formSave').addEventListener('click', async () => {
+    const ctx = formCtx;
+    if (!ctx) return;
+    const fields = formFields();
+    if (!fields.title && !formPhoto) { fTitle.focus(); toast(t('needTitle')); return; }
+    const photo = formPhoto;
+    try {
+      if (ctx.mode === 'board-new') {
+        if (!ready()) return;
+        localStorage.setItem(KEEP_PREF_KEY, fKeep.checked ? '1' : '0');
+        const keep = fKeep.checked;
+        closeForm();
+        const el = addCard({ ...fields, photo: photo ? photo.src : null, ratio: photo ? photo.ratio : null }, ctx.dropPoint);
+        if (keep) {
+          const dream = await saveDream(null, fields, photo);
+          el.dreamId = dream.id;
+          scheduleSave();
+        }
+        toast(t(keep ? 'addedKept' : 'added'));
+      } else if (ctx.mode === 'board-edit') {
+        const el = find(ctx.id);
+        if (!el) { closeForm(); return; }
+        const hadPhoto = !!el.photo, hadInfo = hasInfo(el);
+        const newSrc = photo ? photo.src : null;
+        const photoChanged = newSrc !== el.photo;
+        Object.assign(el, fields, { photo: newSrc, ratio: photo ? photo.ratio : null });
+        // Re-fit the card when its shape changes (new/removed photo, or caption added/removed).
+        if (photoChanged || hadInfo !== hasInfo(el)) {
+          const size = cardSize(el, el.photo && !hadPhoto ? 300 : !el.photo && hadPhoto ? 280 : el.width);
+          el.width = size.width;
+          el.height = size.height;
+        }
+        closeForm();
+        refreshNode(el);
+        render();
+        scheduleSave();
+        toast(t('cardUpdated'));
+      } else {
+        const isEdit = ctx.mode === 'dream-edit';
+        await saveDream(isEdit ? ctx.dream : null, fields, photo);
+        closeForm();
+        await loadDreams();
+        toast(t(isEdit ? 'dreamUpdated' : 'dreamSaved'));
+      }
+    } catch (e) {
+      console.error(e);
+      toast(t('couldNotSave', e.message));
+    }
+  });
+
+  $('formDelete').addEventListener('click', async () => {
+    const ctx = formCtx;
+    if (!ctx) return;
+    if (ctx.mode === 'board-edit') {
+      closeForm();
+      selectedId = ctx.id;
+      deleteSelected();
+    } else if (ctx.mode === 'dream-edit') {
+      if (!confirm(t('confirmDeleteDream', ctx.dream.title || t('thisDream')))) return;
+      closeForm();
+      await deleteDreamRecord(ctx.dream.id);
+      await pruneImages();
+      await loadDreams();
+      toast(t('dreamDeleted'));
+    }
+  });
+
+  function openBoardEdit(id) {
+    if (find(id)) openForm({ mode: 'board-edit', id });
+  }
+
+  /** Copies a board card into Dreams (unless it came from a dream that still exists). */
+  async function saveCardToDreams(el) {
+    try {
+      if (el.dreamId && await getDream(el.dreamId)) { toast(t('alreadyInDreams')); return; }
+      const photo = el.photo ? { src: el.photo, ratio: el.ratio } : null;
+      const dream = await saveDream(null, { title: el.title, desc: el.desc, category: el.category, when: el.when }, photo);
+      el.dreamId = dream.id;
+      scheduleSave();
+      toast(t('savedToDreams'));
+    } catch (e) {
+      console.error(e);
+      toast(t('saveToDreamsFail'));
+    }
+  }
+
+  // ================= Dreams view =================
+  const dGrid = $('dGrid'), dChips = $('dChips'), dSearch = $('dSearch'), dSort = $('dSort');
+  let dreams = [];
+  let dreamCat = 'All';
+
+  function setView(next, updateHash = true) {
+    view = VIEWS.includes(next) ? next : 'board';
+    document.body.dataset.view = view;
+    document.querySelectorAll('.tabs [data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+    if (updateHash) history.replaceState(null, '', view === 'board' ? location.pathname + location.search : '#' + view);
+    if (view === 'dreams') loadDreams();
+    else if (view === 'about') $('aboutView').scrollTop = 0;
+    else fit();
+  }
+  document.querySelectorAll('.tabs [data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+  window.addEventListener('hashchange', () => setView(location.hash.slice(1) || 'board', false));
+  $('aboutView').addEventListener('click', e => {
+    const go = e.target.closest('[data-go]');
+    if (go) setView(go.dataset.go);
+  });
+  $('openAbout').addEventListener('click', () => setView('about'));
+
+  async function loadDreams() {
+    try {
+      dreams = await listDreams();
+    } catch (e) {
+      console.error(e);
+      toast(t('loadDreamsFail'));
+    }
+    renderDreams();
+  }
+
+  function renderDreams() {
+    const q = dSearch.value.trim().toLowerCase();
+    const custom = [...new Set(dreams.map(d => d.category).filter(c => c && !CATEGORIES[c]))].sort();
+    const cats = Object.keys(CATEGORIES).concat(custom);
+    const counts = {};
+    for (const d of dreams) if (d.category) counts[d.category] = (counts[d.category] || 0) + 1;
+    if (dreamCat !== 'All' && !counts[dreamCat]) dreamCat = 'All';
+    dChips.innerHTML = [`<button class="chip ${dreamCat === 'All' ? 'active' : ''}" data-cat="All">${t('all')} <span class="n">${dreams.length}</span></button>`]
+      .concat(cats.filter(c => counts[c]).map(c =>
+        `<button class="chip ${dreamCat === c ? 'active' : ''}" data-cat="${escapeHtml(c)}" style="--c:${catColor(c)}"><i></i>${escapeHtml(catLabel(c))} <span class="n">${counts[c]}</span></button>`))
+      .join('');
+
+    const list = dreams.filter(d =>
+      (dreamCat === 'All' || d.category === dreamCat) &&
+      (!q || `${d.title} ${d.desc} ${d.category} ${catLabel(d.category)}`.toLowerCase().includes(q)));
+    const sort = dSort.value;
+    list.sort((a, b) =>
+      sort === 'new' ? b.createdAt - a.createdAt :
+      sort === 'title' ? (a.title || '').localeCompare(b.title || '') :
+      (a.when || '9999').localeCompare(b.when || '9999') || b.createdAt - a.createdAt);
+
+    const now = new Date();
+    const onBoard = new Set((board?.elements || []).map(el => el.dreamId).filter(Boolean));
+    $('dCount').textContent = dreams.length;
+    const cards = list.map(d => {
+      const h = hash(d.id);
+      let soon = false;
+      if (d.when) {
+        const [y, m] = d.when.split('-').map(Number);
+        const months = (y - now.getFullYear()) * 12 + (m - 1 - now.getMonth());
+        soon = months >= 0 && months <= 3;
+      }
+      const pic = d.thumb
+        ? `<div class="pic"><img src="${d.thumb}" alt=""></div>`
+        : `<div class="pic text" style="--paper:${d.category ? `color-mix(in srgb, ${catColor(d.category)} 20%, #FAF9F5)` : PAPERS[h % PAPERS.length]}">&ldquo;</div>`;
+      return `<article class="dcard" data-id="${d.id}" style="--c:${d.category ? catColor(d.category) : TAPES[h % TAPES.length]}">
+        ${pic}
+        <div class="body">
+          <h3>${escapeHtml(d.title || t('untitled'))}</h3>
+          <div class="meta">
+            ${d.category ? `<span class="cat"><i></i>${escapeHtml(catLabel(d.category))}</span>` : ''}
+            <span class="${soon ? 'soon' : ''}">${whenText(d.when, true)}</span>
+          </div>
+          ${d.desc ? `<p class="desc">${escapeHtml(d.desc)}</p>` : ''}
+        </div>
+        <div class="foot">
+          <button class="btn primary" data-add="${d.id}">${t('addToBoard')}</button>
+          ${onBoard.has(d.id) ? `<span class="used">${t('onBoard')}</span>` : ''}
+        </div>
+      </article>`;
+    });
+    if (dreamCat === 'All' && !q) cards.unshift(`<button class="new-card" id="newCard"><b>+</b>${t('newDreamCard')}</button>`);
+    dGrid.innerHTML = cards.length ? cards.join('') : `<div class="dreams-empty">${t('noMatch')}</div>`;
+  }
+
+  /** Copies a dream onto the current board and switches back to the Board. */
+  async function addDreamToBoard(d) {
+    if (!ready()) return;
+    try {
+      const photo = d.photo ? await resolveImage(d.photo) : null;
+      if (d.photo && !photo) { toast(t('photoMissing')); return; }
+      setView('board');
+      addCard({ title: d.title, desc: d.desc, category: d.category, when: d.when, photo, ratio: d.ratio, dreamId: d.id });
+      toast(t('addedToBoard', shortDate(board.date)));
+    } catch (e) {
+      console.error(e);
+      toast(t('addFail'));
+    }
+  }
+
+  dChips.addEventListener('click', e => {
+    const c = e.target.closest('[data-cat]');
+    if (c) { dreamCat = c.dataset.cat; renderDreams(); }
+  });
+  dSearch.addEventListener('input', renderDreams);
+  dSort.addEventListener('change', renderDreams);
+  $('dNew').addEventListener('click', () => openForm({ mode: 'dream-new' }));
+  dGrid.addEventListener('click', e => {
+    const add = e.target.closest('[data-add]');
+    if (add) { const d = dreams.find(x => x.id === add.dataset.add); if (d) addDreamToBoard(d); return; }
+    if (e.target.closest('#newCard')) { openForm({ mode: 'dream-new' }); return; }
+    const card = e.target.closest('.dcard');
+    if (card) { const d = dreams.find(x => x.id === card.dataset.id); if (d) openForm({ mode: 'dream-edit', dream: d }); }
+  });
+
+  // ================= Header dropdown menus =================
+  const menus = [...document.querySelectorAll('.menu')];
+  function closeMenus(except) { menus.forEach(m => { if (m !== except) m.hidden = true; }); }
+  document.querySelectorAll('[data-menu]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const menu = $(btn.dataset.menu);
+      closeMenus(menu);
+      menu.hidden = !menu.hidden;
+    });
+  });
+  document.addEventListener('click', () => closeMenus());
+
+  // ================= Publish: standalone read-only HTML =================
+  /** opts.label: footer wording ("Published" / "Saved to archive"); opts.note: optional message shown under the title. */
+  function buildPublishedHtml(b, publishedAt, opts = {}) {
+    const archived = !!opts.archived;
+    const label = t(archived ? 'archLabel' : 'pubLabel');
+    const metaName = archived ? 'archived-at' : 'published-at';
+    const css = $('boardStyles').textContent;
+    const pubIso = publishedAt.toISOString();
+    const pubText = publishedAt.toLocaleString(locale(), {
+      year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit',
+    });
+    const items = [...b.elements].sort((a, c) => a.zIndex - c.zIndex).map(el => {
+      const vars = Object.entries(decoVars(el)).map(([k, v]) => `${k}:${v}`).join(';');
+      const style = `left:${el.x}px;top:${el.y}px;width:${el.width}px;height:${el.height}px;z-index:${el.zIndex};${vars}`;
+      return `<div class="${cardClass(el)}" style="${style}">${cardInner(el)}</div>`;
+    }).join('\n    ');
+    const hd = headingOf(b);
+    const heading = hd.hidden ? ''
+      : `<div class="heading" style="left:${hd.cx}px;top:${hd.y}px;font-size:${hd.size}px"><span class="text">${escapeHtml(b.title)}</span></div>\n    `;
+
+    return `<!doctype html>
+<html lang="${lang}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="board-date" content="${b.date}">
+<meta name="${metaName}" content="${pubIso}">
+<title>${escapeHtml(b.title)} · ${prettyDate(b.date)}</title>
+<style>
+${css}
+  body { margin: 0; background: #F0EEE6; color: var(--dark); font-family: var(--sans); }
+  .page { max-width: 1400px; margin: 0 auto; padding: 48px 32px 40px; }
+  .masthead { margin-bottom: 28px; }
+  .masthead h1 { font-family: var(--serif); font-weight: normal; font-size: 40px; margin: 0; }
+  .masthead .date { margin-top: 8px; color: var(--orange); letter-spacing: .2em; text-transform: uppercase; font-size: 14px; }
+  .masthead::after { content: ""; display: block; width: 56px; height: 4px; background: var(--orange); border-radius: 2px; margin-top: 18px; }
+  .memo { margin: -8px 0 28px; max-width: 760px; font-family: var(--serif); font-style: italic; font-size: 18px; color: #3f3e3a; white-space: pre-wrap; }
+  .el { cursor: default; }
+  footer { margin-top: 28px; color: var(--muted); font-size: 13px; text-align: right; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="masthead">
+    ${hd.hidden ? `<h1>${escapeHtml(b.title)}</h1>` : ''}
+    <div class="date">${prettyDate(b.date)}</div>
+  </div>
+  ${opts.note ? `<p class="memo">“${escapeHtml(opts.note)}”</p>` : ''}
+  <div class="board-wrap" id="wrap">
+    <div class="board" id="board" style="width:${BOARD_W}px;height:${BOARD_H}px">
+    ${heading}${items}
+    </div>
+  </div>
+  <footer>${label} <time datetime="${pubIso}">${pubText}</time></footer>
+</div>
+<script>
+  // Scale the fixed-size board to the page width.
+  (function () {
+    var wrap = document.getElementById('wrap'), board = document.getElementById('board');
+    function fit() {
+      var s = Math.min(1, wrap.parentNode.clientWidth / ${BOARD_W});
+      board.style.transform = 'scale(' + s + ')';
+      wrap.style.width = ${BOARD_W} * s + 'px';
+      wrap.style.height = ${BOARD_H} * s + 'px';
+    }
+    window.addEventListener('resize', fit);
+    fit();
+  })();
+<\/script>
+</body>
+</html>
+`;
+  }
+
+  function downloadHtml(html, filename) {
+    const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  async function publish() {
+    if (!ready()) return;
+    if (!board.elements.length && !confirm(t('publishEmpty'))) return;
+    const publishedAt = new Date();
+    downloadHtml(buildPublishedHtml(board, publishedAt), `my-treasure-map-${board.date}.html`);
+    board.publishedAt = publishedAt.getTime();
+    scheduleSave();
+    await flush();
+    setStatus(t('publishedAt', publishedAt.toLocaleTimeString(locale(), { hour: 'numeric', minute: '2-digit' })));
+  }
+  $('publish').addEventListener('click', publish);
+
+  // ================= Archive: versions the user chose to keep =================
+  // Snapshots store photos as "img:<hash>" references into the images store,
+  // so the same photo kept in many versions is stored only once.
+  const archivePanel = $('archivePanel'), archiveList = $('archiveList');
+
+  async function saveToArchive() {
+    if (!ready()) return;
+    if (!board.elements.length) { alert(t('archiveEmptyBoard')); return; }
+    const note = prompt(t('archivePrompt'), '');
+    if (note === null) return;
+    await flush();
+    try {
+      const elements = [];
+      for (const el of board.elements) {
+        elements.push(el.photo ? { ...el, photo: await storeImage(el.photo) } : { ...el });
+      }
+      await putSnapshot({ id: uid(), boardDate: board.date, title: board.title, heading: headingOf(board), note: note.trim(), savedAt: Date.now(), elements });
+      setStatus(t('archived'));
+      if (!archivePanel.hidden) renderArchive();
+    } catch (e) {
+      console.error(e);
+      setStatus(t('archiveFail'), true);
+    }
+  }
+  $('saveArchive').addEventListener('click', saveToArchive);
+
+  async function hydrate(snap) {
+    const elements = await Promise.all(snap.elements.map(normalizeEl).map(async el =>
+      el.photo ? { ...el, photo: (await resolveImage(el.photo)) || '' } : el));
+    // versions archived before the board title existed are shown without it, as they were
+    return { date: snap.boardDate, title: snap.title, heading: snap.heading || { hidden: true }, elements };
+  }
+
+  async function snapshotHtml(snap) {
+    return buildPublishedHtml(await hydrate(snap), new Date(snap.savedAt), { archived: true, note: snap.note });
+  }
+
+  /** What a snapshot "dreams": named dreams (title, or first line of text) and untitled photos. */
+  function dreamsOf(snap) {
+    const names = new Set(), photos = new Set();
+    for (const el of snap.elements.map(normalizeEl)) {
+      const name = (el.title || (el.desc || '').split('\n')[0]).trim();
+      if (name) names.add(name);
+      else if (el.photo) photos.add(el.photo);
+    }
+    return { names, photos };
+  }
+
+  function changesHtml(prev, cur) {
+    const c = dreamsOf(cur);
+    const clip = s => escapeHtml(s.length > 70 ? s.slice(0, 70) + '…' : s);
+    if (!prev) return `<li class="same">${t('firstMap', c.names.size, c.photos.size)}</li>`;
+    const p = dreamsOf(prev);
+    const rows = [];
+    for (const s of c.names) if (!p.names.has(s)) rows.push(`<li class="add">+ “${clip(s)}”</li>`);
+    for (const s of p.names) if (!c.names.has(s)) rows.push(`<li class="rm">− “${clip(s)}”</li>`);
+    const added = [...c.photos].filter(k => !p.photos.has(k)).length;
+    const removed = [...p.photos].filter(k => !c.photos.has(k)).length;
+    if (added) rows.push(`<li class="add">+ ${t('untitledPhotos', added)}</li>`);
+    if (removed) rows.push(`<li class="rm">− ${t('untitledPhotos', removed)}</li>`);
+    return rows.length ? rows.join('') : `<li class="same">${t('sameDreams')}</li>`;
+  }
+
+  let archiveCache = [];
+  async function renderArchive() {
+    archiveCache = (await listSnapshots()).sort((a, b) => a.savedAt - b.savedAt);
+    if (!archiveCache.length) {
+      archiveList.innerHTML = `<div class="snap-empty">${t('snapEmpty')}</div>`;
+      return;
+    }
+    // Changes are compared with the previous saved version (across all boards), oldest → newest.
+    const items = archiveCache.map((snap, i) => ({ snap, changes: changesHtml(archiveCache[i - 1], snap) })).reverse();
+    let html = '', lastYear = '', lastMonth = '';
+    for (const { snap, changes } of items) {
+      const d = new Date(snap.savedAt);
+      const year = String(d.getFullYear());
+      const month = d.toLocaleDateString(locale(), { month: 'long' });
+      if (year !== lastYear) { html += `<div class="year">${year}</div>`; lastYear = year; lastMonth = ''; }
+      if (month !== lastMonth) { html += `<div class="month">${month}</div>`; lastMonth = month; }
+      const when = d.toLocaleString(locale(), { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+      html += `<div class="snap">
+        <div class="snap-when">${when}</div>
+        <div class="snap-board">${t('boardOf', escapeHtml(snap.title), shortDate(snap.boardDate))}</div>
+        ${snap.note ? `<p class="snap-memo">“${escapeHtml(snap.note)}”</p>` : ''}
+        <ul class="snap-changes">${changes}</ul>
+        <div class="snap-actions">
+          <button class="btn" data-act="view" data-id="${snap.id}">${t('view')}</button>
+          <button class="btn" data-act="download" data-id="${snap.id}">${t('download')}</button>
+          <button class="btn" data-act="delete" data-id="${snap.id}">${t('del')}</button>
+        </div>
+      </div>`;
+    }
+    archiveList.innerHTML = html;
+  }
+
+  /** Removes stored images that no archived version and no dream refers to any more. */
+  async function pruneImages() {
+    const used = new Set();
+    for (const snap of await listSnapshots()) {
+      for (const el of snap.elements.map(normalizeEl)) if (el.photo && el.photo.startsWith('img:')) used.add(el.photo.slice(4));
+    }
+    for (const d of await listDreams()) if (d.photo) used.add(d.photo.slice(4));
+    const keys = await dbRequest('readonly', s => s.getAllKeys(), 'images');
+    for (const k of keys) if (!used.has(k)) await dbRequest('readwrite', s => s.delete(k), 'images');
+  }
+
+  archiveList.addEventListener('click', async e => {
+    const btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    const snap = archiveCache.find(s => s.id === btn.dataset.id);
+    if (!snap) return;
+    const act = btn.dataset.act;
+    if (act === 'view') {
+      const w = window.open('', '_blank'); // open synchronously so popup blockers allow it
+      const html = await snapshotHtml(snap);
+      if (w) { w.document.open(); w.document.write(html); w.document.close(); }
+      else downloadHtml(html, `my-treasure-map-${snap.boardDate}-archived.html`);
+    } else if (act === 'download') {
+      const stamp = new Date(snap.savedAt);
+      const file = `my-treasure-map-${snap.boardDate}-archived-${stamp.getFullYear()}${pad2(stamp.getMonth() + 1)}${pad2(stamp.getDate())}-${pad2(stamp.getHours())}${pad2(stamp.getMinutes())}.html`;
+      downloadHtml(await snapshotHtml(snap), file);
+    } else if (act === 'delete') {
+      if (!confirm(t('confirmDeleteSnap'))) return;
+      await deleteSnapshot(snap.id);
+      await pruneImages();
+      renderArchive();
+    }
+  });
+
+  $('archiveBtn').addEventListener('click', () => {
+    archivePanel.hidden = !archivePanel.hidden;
+    if (!archivePanel.hidden) renderArchive();
+  });
+  $('closeArchive').addEventListener('click', () => { archivePanel.hidden = true; });
+
+  // ================= Language switching =================
+  function applyI18n() {
+    document.documentElement.lang = lang;
+    document.body.dataset.lang = lang;
+    document.querySelectorAll('[data-i18n]').forEach(n => { n.textContent = t(n.dataset.i18n); });
+    document.querySelectorAll('[data-i18n-html]').forEach(n => { n.innerHTML = t(n.dataset.i18nHtml); });
+    document.querySelectorAll('[data-i18n-title]').forEach(n => { n.title = t(n.dataset.i18nTitle); });
+    document.querySelectorAll('[data-i18n-ph]').forEach(n => { n.placeholder = t(n.dataset.i18nPh); });
+    $('catList').innerHTML = Object.keys(CATEGORIES).map(c => `<option value="${escapeHtml(catLabel(c))}">`).join('');
+    boardEl.dataset.dropLabel = t('dropHere');
+    document.querySelectorAll('.lang [data-lang]').forEach(b => {
+      b.classList.toggle('active', b.dataset.lang === lang);
+      b.setAttribute('aria-pressed', String(b.dataset.lang === lang));
+    });
+  }
+
+  function labelForm(ctx) {
+    const isNew = ctx.mode.endsWith('new');
+    $('formTitle').textContent = t(isNew ? 'formNew' : 'formEdit');
+    $('formSave').textContent = t(ctx.mode === 'board-new' ? 'addToBoard' : 'save');
+    $('formDelete').textContent = t(ctx.mode === 'board-edit' ? 'removeFromBoard' : 'del');
+  }
+
+  function setLang(next) {
+    lang = I18N[next] ? next : 'en';
+    localStorage.setItem(LANG_KEY, lang);
+    applyI18n();
+    if (board) {
+      renderBoardList();
+      renderTitle();
+      for (const [id, node] of nodes) { const el = find(id); if (el) fillNode(node, el); }
+      render();
+      setStatus(savedDates.includes(board.date) ? t('saved') : '');
+    }
+    if (view === 'dreams') renderDreams();
+    if (!archivePanel.hidden) renderArchive();
+    if (formCtx) {
+      labelForm(formCtx);
+      const cat = catFromInput(fCat.value.trim());
+      fCat.value = catLabel(cat);
+      renderDrop();
+    }
+  }
+  document.querySelectorAll('.lang [data-lang]').forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
+
+  // ================= Fit board to window =================
+  function fit() {
+    const padding = 32;
+    const r = stage.getBoundingClientRect();
+    if (!r.width) return; // stage hidden (Dreams view)
+    scale = Math.min((r.width - padding * 2) / BOARD_W, (r.height - padding * 2) / BOARD_H);
+    scale = Math.max(scale, 0.2);
+    boardEl.style.width = BOARD_W + 'px';
+    boardEl.style.height = BOARD_H + 'px';
+    boardEl.style.transform = `scale(${scale})`;
+    boardWrap.style.width = BOARD_W * scale + 'px';
+    boardWrap.style.height = BOARD_H * scale + 'px';
+    updateToolbar();
+  }
+  window.addEventListener('resize', fit);
+
+  // ================= Init =================
+  /** One-time move of the old single localStorage board into today's date. */
+  async function migrateLegacy() {
+    const raw = localStorage.getItem(LEGACY_KEY);
+    if (!raw || localStorage.getItem(LEGACY_KEY + ':migrated')) return;
+    try {
+      const data = JSON.parse(raw);
+      const date = todayStr();
+      if (!(await getBoard(date)) && Array.isArray(data.elements) && data.elements.length) {
+        await putBoard({ ...blankBoard(date), title: data.title || t('defaultTitle'), elements: data.elements.map(normalizeEl) });
+      }
+      localStorage.setItem(LEGACY_KEY + ':migrated', '1'); // original data is left in place as a backup
+    } catch (e) {
+      console.error('Legacy migration failed', e);
+    }
+  }
+
+  (async () => {
+    applyI18n();
+    fit();
+    try {
+      await migrateLegacy();
+      savedDates = (await listDates()).sort();
+      await openDate(todayStr());
+    } catch (e) {
+      console.error(e);
+      board = blankBoard(todayStr());
+      dateInput.value = board.date;
+      renderTitle();
+      render();
+      setStatus(t('storageFail'), true);
+    }
+    // Open the view named in the address; on the very first visit, start with the About intro.
+    const requested = location.hash.slice(1);
+    if (requested === 'dreams' || requested === 'about') setView(requested, false);
+    else if (!localStorage.getItem(INTRO_SEEN_KEY)) setView('about', false);
+    localStorage.setItem(INTRO_SEEN_KEY, '1');
+  })();
+})();
+</script>
+</body>
+</html>

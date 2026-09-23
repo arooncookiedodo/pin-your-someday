@@ -1,0 +1,12 @@
+# Only the live app and its About page are published.
+index.v*.html
+theme-preview.html
+dreams-preview.html
+README.md
+
+# Never upload local credentials or tooling files.
+.env
+.env.*
+.vercel
+.gitignore
+SUBMISSION.md
