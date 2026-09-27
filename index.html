@@ -737,14 +737,14 @@
   }
 </style>
 </head>
-<body data-view="board">
+<body data-view="about">
 
 <header>
   <h1 class="title" id="title" title="Click to rename" data-i18n-title="renameHint"></h1>
   <div class="tabs">
-    <button data-view="board" class="active" data-i18n="tabBoard">Board</button>
+    <button data-view="board" data-i18n="tabBoard">Board</button>
     <button data-view="dreams" data-i18n="tabDreams">Dreams</button>
-    <button data-view="about" data-i18n="tabAbout">About</button>
+    <button data-view="about" class="active" data-i18n="tabAbout">About</button>
   </div>
   <input type="date" class="field board-ctx" id="date" title="Board date" data-i18n-title="boardDate">
   <select class="field board-ctx" id="boards" title="Jump to a saved board" data-i18n-title="jumpBoard"></select>
@@ -758,6 +758,8 @@
     <div class="menu" id="keepMenu" hidden>
       <button id="saveArchive"><b data-i18n="saveArchive">Save to archive…</b><small data-i18n="saveArchiveSub">Keep this version to look back on later</small></button>
       <button id="publish"><b data-i18n="publish">Publish as HTML</b><small data-i18n="publishSub">Download a read-only copy to share</small></button>
+      <button id="saveImage"><b data-i18n="saveImage">Save as image</b><small data-i18n="saveImageSub">The whole board as a landscape JPG</small></button>
+      <button id="saveWallpaper"><b data-i18n="saveWallpaper">Save as wallpaper</b><small data-i18n="saveWallpaperSub">A portrait JPG sized for a phone lock screen</small></button>
     </div>
   </div>
   <div class="menu-wrap more-wrap">
@@ -902,7 +904,7 @@
       </li>
       <li>
         <b>Publish</b>
-        <p>Choose <em>Keep ▾ → Publish as HTML</em> to save the board as a single HTML file. Photos are embedded and the publish date is recorded, so it opens anywhere.</p>
+        <p>Choose <em>Keep ▾ → Publish as HTML</em> to save the board as a single HTML file. Photos are embedded and the publish date is recorded, so it opens anywhere. <em>Save as image</em> and <em>Save as wallpaper</em> save it as a JPG instead; the wallpaper is sized for a phone lock screen.</p>
       </li>
       <li>
         <b>Keep it in your archive</b>
@@ -977,7 +979,7 @@
       </li>
       <li>
         <b>발행하기</b>
-        <p><em>간직하기 ▾ → HTML로 발행</em>을 누르면 보드가 HTML 파일 한 개로 저장됩니다. 사진이 파일 안에 들어 있고 발행 일시도 기록되어, 어디서든 열어볼 수 있어요.</p>
+        <p><em>간직하기 ▾ → HTML로 발행</em>을 누르면 보드가 HTML 파일 한 개로 저장됩니다. 사진이 파일 안에 들어 있고 발행 일시도 기록되어, 어디서든 열어볼 수 있어요. <em>이미지로 저장</em>이나 <em>배경화면으로 저장</em>을 누르면 JPG 이미지로 저장돼요. 배경화면은 폰 잠금화면 크기에 맞춰져요.</p>
       </li>
       <li>
         <b>아카이브에 간직하기</b>
@@ -1068,7 +1070,6 @@
   // (the default board title now comes from t('defaultTitle'))
   const LEGACY_KEY = 'treasure-map:v1';          // single-board localStorage format
   const KEEP_PREF_KEY = 'treasure-map:alsoKeepInDreams';
-  const INTRO_SEEN_KEY = 'treasure-map:introSeen';
   const VIEWS = ['board', 'dreams', 'about'];
   const TAPES = ['#D97757', '#6A9BCC', '#788C5D'];
   const PAPERS = ['#F6E3D9', '#E8E6DC', '#DDE7F1'];
@@ -1102,6 +1103,9 @@
       archive: 'Archive', keep: 'Keep ▾',
       saveArchive: 'Save to archive…', saveArchiveSub: 'Keep this version to look back on later',
       publish: 'Publish as HTML', publishSub: 'Download a read-only copy to share',
+      saveImage: 'Save as image', saveImageSub: 'The whole board as a landscape JPG',
+      saveWallpaper: 'Save as wallpaper', saveWallpaperSub: 'A portrait JPG sized for a phone lock screen',
+      imageMaking: 'Making the image…', imageSaved: 'Image saved', imageFail: 'Could not make the image', imageEmpty: 'Pin a dream first, then save the board as an image.',
       more: 'More',
       aboutMenu: 'About Pin Your Someday', aboutMenuSub: 'What this is and how to use it',
       hideTitle: 'Hide board title', showTitle: 'Show board title', titleMenuSub: 'The big title shown on the board',
@@ -1186,6 +1190,9 @@
       archive: '아카이브', keep: '간직하기 ▾',
       saveArchive: '아카이브에 간직하기…', saveArchiveSub: '나중에 돌아볼 수 있게 이 버전을 보관해요',
       publish: 'HTML로 발행', publishSub: '공유용 보기 전용 파일을 내려받아요',
+      saveImage: '이미지로 저장', saveImageSub: '보드 그대로 가로 이미지(JPG)로 저장해요',
+      saveWallpaper: '배경화면으로 저장', saveWallpaperSub: '폰 잠금화면에 맞춘 세로 이미지로 저장해요',
+      imageMaking: '이미지를 만드는 중…', imageSaved: '이미지를 저장했어요', imageFail: '이미지를 만들지 못했어요', imageEmpty: '꿈을 하나 이상 붙인 뒤에 이미지로 저장할 수 있어요.',
       more: '더보기',
       aboutMenu: '‘오늘의 꿈, 언젠가 다시’ 소개', aboutMenuSub: '무엇이고 어떻게 쓰는지',
       hideTitle: '보드 타이틀 숨기기', showTitle: '보드 타이틀 보이기', titleMenuSub: '보드 위에 크게 보이는 제목',
@@ -1304,7 +1311,7 @@
   let scale = 1;
   let zoom = 1;               // extra magnification on top of "fit the whole board" (touch screens)
   let flowMode = false, flowWidth = 0;   // narrow screens: the board is a tall "paper" (see layoutFlow)
-  let view = 'board';
+  let view = 'about';
   let headingSelected = false;   // the board title (not a card) is selected
 
   /** The big board title's placement: centre x, top y, font size (board units). */
@@ -2559,16 +2566,17 @@
   let dreamCat = 'All';
 
   function setView(next, updateHash = true) {
-    view = VIEWS.includes(next) ? next : 'board';
+    view = VIEWS.includes(next) ? next : 'about';
     document.body.dataset.view = view;
     document.querySelectorAll('.tabs [data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === view));
-    if (updateHash) history.replaceState(null, '', view === 'board' ? location.pathname + location.search : '#' + view);
+    // About is the front page (plain address); Board and Dreams get #board / #dreams so a reload stays put
+    if (updateHash) history.replaceState(null, '', view === 'about' ? location.pathname + location.search : '#' + view);
     if (view === 'dreams') loadDreams();
     else if (view === 'about') $('aboutScroll').scrollTop = 0;
     else fit();
   }
   document.querySelectorAll('.tabs [data-view]').forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
-  window.addEventListener('hashchange', () => setView(location.hash.slice(1) || 'board', false));
+  window.addEventListener('hashchange', () => setView(location.hash.slice(1) || 'about', false));
   $('aboutView').addEventListener('click', e => {
     const go = e.target.closest('[data-go]');
     if (go) setView(go.dataset.go);
@@ -2881,6 +2889,282 @@ ${css}
   }
   $('publish').addEventListener('click', publish);
 
+  // ================= Save as image: the landscape board, or a phone wallpaper (JPG) =================
+  // Drawn straight onto a canvas (no libraries), following the card styles in #boardStyles.
+  const NAMED_COLORS = { 'var(--mid)': '#B0AEA5', 'var(--orange)': '#D97757' };
+  const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  function hexRgb(h) {
+    h = h.replace('#', '');
+    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+    const n = parseInt(h, 16);
+    return [n >> 16 & 255, n >> 8 & 255, n & 255];
+  }
+  /** Turns the card colour values (hex, var(--…), color-mix(in srgb, …)) into something a canvas accepts. */
+  function solidColor(v) {
+    v = String(v || '').trim();
+    if (NAMED_COLORS[v]) return NAMED_COLORS[v];
+    const m = v.match(/color-mix\(in srgb,\s*(#[0-9a-f]{3,6})\s+(\d+)%,\s*(#[0-9a-f]{3,6})\)/i);
+    if (m) {
+      const a = hexRgb(m[1]), b = hexRgb(m[3]), p = +m[2] / 100;
+      return `rgb(${a.map((x, i) => Math.round(x * p + b[i] * (1 - p))).join(',')})`;
+    }
+    return v || '#FAF9F5';
+  }
+  /** Word wrap for canvas text; words longer than a line break by character. Keeps line breaks. */
+  function wrapLines(ctx, text, maxW) {
+    const lines = [];
+    for (const para of String(text).split('\n')) {
+      let line = '';
+      for (let tok of para.match(/\S+\s*|\s+/g) || ['']) {
+        if (ctx.measureText(line + tok.trimEnd()).width <= maxW) { line += tok; continue; }
+        if (line.trim()) { lines.push(line.trimEnd()); line = ''; }
+        while (tok.trimEnd().length > 1 && ctx.measureText(tok.trimEnd()).width > maxW) {
+          let i = 1;
+          while (i < tok.length - 1 && ctx.measureText(tok.slice(0, i + 1)).width <= maxW) i++;
+          lines.push(tok.slice(0, i));
+          tok = tok.slice(i);
+        }
+        line = tok;
+      }
+      lines.push(line.trimEnd());
+    }
+    return lines;
+  }
+  function ellipsize(ctx, text, maxW) {
+    if (ctx.measureText(text).width <= maxW) return text;
+    let s = text;
+    while (s && ctx.measureText(s + '…').width > maxW) s = s.slice(0, -1);
+    return s + '…';
+  }
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.fill();
+  }
+  function paintPaper(ctx, W, H) {
+    ctx.fillStyle = '#FAF9F5';
+    ctx.fillRect(0, 0, W, H);
+    const tile = document.createElement('canvas');
+    tile.width = tile.height = 18;
+    const tc = tile.getContext('2d');
+    tc.fillStyle = 'rgba(20, 20, 19, .04)';
+    for (const x of [0, 6, 12]) for (const y of [0, 6, 12]) { tc.beginPath(); tc.arc(x + 1, y + 1, 1, 0, Math.PI * 2); tc.fill(); }
+    ctx.fillStyle = ctx.createPattern(tile, 'repeat');
+    ctx.fillRect(0, 0, W, H);
+  }
+  /** Category dot + label, then the target date — like `.card .m`. `y` is the text's middle. */
+  function drawMeta(ctx, el, x, y, maxW, sans) {
+    ctx.font = `14px ${sans}`;
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#6b6a64';
+    let cx = x;
+    if (el.category) {
+      ctx.fillStyle = catColor(el.category);
+      ctx.beginPath(); ctx.arc(cx + 4, y, 4, 0, Math.PI * 2); ctx.fill();
+      cx += 14;
+      const label = catLabel(el.category);
+      ctx.fillStyle = '#6b6a64';
+      ctx.fillText(ellipsize(ctx, label, Math.max(0, x + maxW - cx)), cx, y);
+      cx += ctx.measureText(label).width + 12;
+    }
+    if (el.when && cx < x + maxW) ctx.fillText(ellipsize(ctx, whenText(el.when), x + maxW - cx), cx, y);
+  }
+  /** Draws one card with its top-left corner at the origin, at its own board size. */
+  function drawCard(ctx, el, img, f) {
+    const w = el.width, h = el.height, v = decoVars(el), isText = !el.photo;
+    const meta = !!(el.category || el.when);
+    ctx.save();
+    ctx.shadowColor = `rgba(20, 20, 19, ${isText ? .12 : .16})`;
+    ctx.shadowBlur = 10;
+    ctx.shadowOffsetY = 3;
+    ctx.fillStyle = isText ? solidColor(v['--paper']) : '#fff';
+    ctx.fillRect(0, 0, w, h);
+    ctx.restore();
+    ctx.textBaseline = 'top';
+    if (!isText) {
+      const bare = !hasInfo(el);
+      const infoH = bare ? 0 : 10 + (el.title ? 27.5 : 0) + (meta ? 25 : 0);
+      const px = 14, py = 14, pw = w - 28, ph = h - py - (bare ? 44 : 12) - infoH;
+      if (img && ph > 0) {
+        const ir = img.width / img.height, br = pw / ph;
+        let sx = 0, sy = 0, sw = img.width, sh = img.height;
+        if (ir > br) { sw = img.height * br; sx = (img.width - sw) / 2; } else { sh = img.width / br; sy = (img.height - sh) / 2; }
+        ctx.drawImage(img, sx, sy, sw, sh, px, py, pw, ph);
+      }
+      let y = py + Math.max(ph, 0) + 10;
+      if (el.title) {
+        ctx.font = `22px ${f.serif}`;
+        ctx.fillStyle = '#141413';
+        ctx.fillText(ellipsize(ctx, el.title, pw - 4), px + 2, y + 2);
+        y += 27.5;
+      }
+      if (meta) drawMeta(ctx, el, px + 2, y + 15, pw - 4, f.sans);
+    } else {
+      const px = 26, iw = w - 52, bottom = h - 22 - (meta ? 32 : 0);
+      let y = 30;
+      const lines = (font, color, text, lh, size) => {
+        ctx.font = font;
+        ctx.fillStyle = color;
+        for (const line of wrapLines(ctx, text, iw)) {
+          if (y + lh > bottom + 1) break;
+          ctx.fillText(line, px, y + (lh - size) / 2);
+          y += lh;
+        }
+      };
+      if (!el.title && !el.desc) lines(`italic 28px ${f.serif}`, 'rgba(20, 20, 19, .35)', t('emptyCard'), 36.4, 28);
+      if (el.title) lines(`28px ${f.serif}`, '#141413', el.title, 36.4, 28);
+      if (el.desc) { y += 10; lines(`18px ${f.serif}`, '#3f3e3a', el.desc, 27, 18); }
+      if (meta) drawMeta(ctx, el, px, h - 22 - 10, iw, f.sans);
+    }
+    // washi tape across the top edge
+    const tw = Math.max(60, w * (isText ? .30 : .38)), th = 34;
+    ctx.save();
+    ctx.translate(w / 2, -16 + th / 2);
+    ctx.rotate(-3 * Math.PI / 180);
+    ctx.globalAlpha = .78;
+    ctx.fillStyle = solidColor(v['--tape']);
+    ctx.fillRect(-tw / 2, -th / 2, tw, th);
+    ctx.restore();
+  }
+  /** Draws a card centred at (cx, cy), scaled by k and tilted like on the board. */
+  function placeCard(ctx, el, img, cx, cy, k, f) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(tiltOf(el) * Math.PI / 180);
+    ctx.scale(k, k);
+    ctx.translate(-el.width / 2, -el.height / 2);
+    drawCard(ctx, el, img, f);
+    ctx.restore();
+  }
+  /** The big board title with its orange underline; returns the y just below it. */
+  function drawTitle(ctx, text, cx, top, size, maxW, serif, draw = true) {
+    ctx.font = `${size}px ${serif}`;
+    const lh = size * 1.1, lines = wrapLines(ctx, text, maxW);
+    let y = top + 4;
+    if (draw) { ctx.fillStyle = '#141413'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; }
+    for (const line of lines) { if (draw) ctx.fillText(line, cx, y + (lh - size) / 2); y += lh; }
+    const uw = size * 1.3, uh = Math.max(3, size * .075);
+    if (draw) { ctx.fillStyle = '#D97757'; roundRect(ctx, cx - uw / 2, y + size * .25, uw, uh, 3); ctx.textAlign = 'left'; }
+    return y + size * .25 + uh + 14;
+  }
+  async function loadCardImages(elements) {
+    const map = new Map();
+    await Promise.all(elements.filter(el => el.photo).map(async el => {
+      try { map.set(el.id, await loadImg(el.photo)); } catch (e) { console.error(e); }
+    }));
+    return map;
+  }
+  const readingOrder = els => {
+    const band = el => Math.round((el.y + el.height / 2) / 180);
+    return [...els].sort((a, b) => band(a) - band(b) || a.x - b.x);
+  };
+  const fontsFor = () => ({ serif: cssVar('--serif'), sans: cssVar('--sans') });
+
+  /** The board exactly as laid out on a wide screen, at twice the size for sharpness. */
+  async function renderLandscape() {
+    const S = 2, f = fontsFor();
+    const canvas = document.createElement('canvas');
+    canvas.width = BOARD_W * S;
+    canvas.height = BOARD_H * S;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(S, S);
+    paintPaper(ctx, BOARD_W, BOARD_H);
+    const imgs = await loadCardImages(board.elements);
+    for (const el of [...board.elements].sort((a, b) => a.zIndex - b.zIndex)) {
+      placeCard(ctx, el, imgs.get(el.id), el.x + el.width / 2, el.y + el.height / 2, 1, f);
+    }
+    const hd = headingOf(board);
+    if (!hd.hidden) drawTitle(ctx, board.title, hd.cx, hd.y, hd.size, BOARD_W * 2, f.serif);
+    return canvas;
+  }
+
+  /**
+   * A phone lock-screen wallpaper (1170 × 2532, 9:19.5). Cards flow in reading order between the
+   * clock area at the top and the shortcut buttons at the bottom, using as many columns as needed
+   * so everything fits on one screen.
+   */
+  async function renderWallpaper() {
+    const W = 1170, H = 2532, f = fontsFor();
+    const canvas = document.createElement('canvas');
+    canvas.width = W;
+    canvas.height = H;
+    const ctx = canvas.getContext('2d');
+    paintPaper(ctx, W, H);
+    const top = Math.round(H * .30), bottom = Math.round(H * .86), pad = 80, gap = 40;
+    const hd = headingOf(board);
+    const titleSize = 76;
+    const titleH = hd.hidden ? 0 : drawTitle(ctx, board.title, W / 2, 0, titleSize, W - pad * 2, f.serif, false) + 24;
+    const avail = bottom - top - titleH;
+    const order = readingOrder(board.elements);
+    const layout = (cols, colW) => {
+      const hs = new Array(cols).fill(0), out = [];
+      for (const el of order) {
+        const k = colW / el.width, h = el.height * k, c = hs.indexOf(Math.min(...hs));
+        out.push({ el, k, col: c, cy: hs[c] + 18 * k + h / 2 });
+        hs[c] += 18 * k + h + gap;
+      }
+      return { out, cols, colW, height: Math.max(...hs) - gap };
+    };
+    let best = null;
+    for (let cols = 1; cols <= 4 && !best; cols++) {
+      const colW = Math.min((W - pad * 2 - gap * (cols - 1)) / cols, 620);   // one card never fills the whole screen
+      const l = layout(cols, colW);
+      if (l.height <= avail || cols === 4) best = l;
+    }
+    for (let i = 0; i < 3 && best.height > avail; i++) best = layout(best.cols, best.colW * avail / best.height);
+    const used = Math.min(best.cols, order.length);
+    const x0 = (W - (used * best.colW + (used - 1) * gap)) / 2;
+    const y0 = top + Math.max(0, (bottom - top - titleH - best.height) / 2);   // centre the group vertically
+    const imgs = await loadCardImages(board.elements);
+    if (!hd.hidden) drawTitle(ctx, board.title, W / 2, y0, titleSize, W - pad * 2, f.serif);
+    for (const p of best.out) {
+      placeCard(ctx, p.el, imgs.get(p.el.id), x0 + p.col * (best.colW + gap) + best.colW / 2, y0 + titleH + p.cy, p.k, f);
+    }
+    return canvas;
+  }
+
+  async function saveBoardImage(kind) {
+    closeMenus();
+    if (!ready()) return;
+    if (!board.elements.length) { toast(t('imageEmpty')); return; }
+    toast(t('imageMaking'));
+    try {
+      const canvas = kind === 'wallpaper' ? await renderWallpaper() : await renderLandscape();
+      const blob = await new Promise((resolve, reject) =>
+        canvas.toBlob(b => (b ? resolve(b) : reject(new Error('toBlob failed'))), 'image/jpeg', 0.92));
+      const name = `pin-your-someday-${board.date}${kind === 'wallpaper' ? '-wallpaper' : ''}.jpg`;
+      const file = new File([blob], name, { type: 'image/jpeg' });
+      // Phones: the share sheet offers "Save Image" and messaging apps. Elsewhere: a normal download.
+      if (touchMQ.matches && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: board.title });
+          toast(t('imageSaved'));
+          return;
+        } catch (e) {
+          if (e.name === 'AbortError') return;   // the user closed the share sheet
+        }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast(t('imageSaved'));
+    } catch (e) {
+      console.error(e);
+      toast(t('imageFail'));
+    }
+  }
+  $('saveImage').addEventListener('click', () => saveBoardImage('landscape'));
+  $('saveWallpaper').addEventListener('click', () => saveBoardImage('wallpaper'));
+
   // ================= Archive: versions the user chose to keep =================
   // Snapshots store photos as "img:<hash>" references into the images store,
   // so the same photo kept in many versions is stored only once.
@@ -3161,11 +3445,9 @@ ${css}
       render();
       setStatus(t('storageFail'), true);
     }
-    // Open the view named in the address; on the very first visit, start with the About intro.
+    // Open the view named in the address (#board / #dreams); otherwise start on the About page.
     const requested = location.hash.slice(1);
-    if (requested === 'dreams' || requested === 'about') setView(requested, false);
-    else if (!localStorage.getItem(INTRO_SEEN_KEY)) setView('about', false);
-    localStorage.setItem(INTRO_SEEN_KEY, '1');
+    setView(requested === 'board' || requested === 'dreams' ? requested : 'about', false);
   })();
 })();
 </script>
