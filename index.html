@@ -303,17 +303,28 @@
   .board-scroll.zoomed { overflow: auto; -webkit-overflow-scrolling: touch; }
   .board-scroll > .board-wrap { margin: auto; }
   .board-scroll.zoomed > .board-wrap { margin: var(--pad, 12px); }
+  .board-bar { position: absolute; z-index: 40; display: none; align-items: center; gap: 10px; }
+  .board-hint {
+    display: none; flex: 1; min-width: 0; font-size: 13px; line-height: 1.4; color: #3f4a55;
+  }
+  .board-hint:empty { visibility: hidden; }
+  .board-bar.floating .board-hint:not(:empty) {
+    flex: 0 1 auto; margin-right: auto; padding: 7px 11px; border-radius: 9px;
+    background: rgba(255, 255, 255, .92); box-shadow: 0 3px 10px rgba(20, 20, 19, .12);
+  }
   .zoom {
-    position: absolute; z-index: 40; display: none; gap: 2px; padding: 3px;
+    display: flex; flex: none; gap: 2px; padding: 3px; margin-left: auto;
     background: rgba(255, 255, 255, .92); border: 1px solid var(--light); border-radius: 10px;
     box-shadow: 0 3px 10px rgba(20, 20, 19, .12);
   }
   .zoom button {
-    font: inherit; font-size: 14px; min-width: 38px; height: 34px; padding: 0 10px;
+    font: inherit; font-size: 13px; min-width: 38px; height: 34px; padding: 0 8px;
     border: 0; border-radius: 7px; background: none; color: var(--dark); cursor: pointer;
+    font-variant-numeric: tabular-nums;
   }
+  .zoom #zoomFit { min-width: 50px; color: var(--muted); }
   .zoom #zoomIn, .zoom #zoomOut { font-size: 20px; line-height: 1; }
-  .zoom button:disabled { color: var(--mid); cursor: default; }
+  .zoom button:disabled { color: var(--light); cursor: default; }
   .zoom button:not(:disabled):active { background: var(--light); }
   /* Handles and outlines keep a steady on-screen size however small the board is drawn (--ui = 1 / scale on touch). */
   .board { --ui: 1; }
@@ -594,10 +605,14 @@
 
   /* ================= Touch screens (phones and tablets) ================= */
   @media (pointer: coarse), (max-width: 720px) {
-    .zoom { display: flex; top: 10px; right: 10px; }
-    .el .resize, .heading .resize { width: 24px; height: 24px; right: -13px; bottom: -13px; }
-    .el .rotate { width: 24px; height: 24px; margin-left: -12px; bottom: -50px; }
-    .el .rotate::after { height: 18px; }
+    .board-bar { display: flex; top: 10px; right: 10px; }
+    .el .resize, .heading .resize { width: 20px; height: 20px; right: -11px; bottom: -11px; }
+    .el .rotate { width: 20px; height: 20px; margin-left: -10px; bottom: -44px; }
+    .el .rotate::after { height: 16px; }
+    /* bigger invisible touch targets around the small handles */
+    .el .resize::before, .heading .resize::before, .el .rotate::before {
+      content: ""; position: absolute; inset: -12px; border-radius: 50%;
+    }
     /* The empty-board message stays readable at any board scale. */
     .empty { zoom: var(--ui); padding: 16px; line-height: 1.6; font-size: 15px; }
     .empty .big { font-size: 26px; }
@@ -637,9 +652,15 @@
     .menu { min-width: 0; width: max-content; max-width: calc(100vw - 20px); }
     body[data-view="about"] header::before { display: none; }
 
-    /* Selection toolbar docks to the bottom of the screen instead of floating above the card. */
+    /* Board sits at the top; the hint/zoom bar and the card toolbar follow right under it (placed by JS). */
+    .board-scroll:not(.zoomed) > .board-wrap { margin: var(--pad, 12px) auto auto; }
+    .board-bar { left: 12px; right: 12px; }
+    .board-hint { display: block; }
+    .el .resize, .heading .resize { width: 16px; height: 16px; right: -9px; bottom: -9px; border-width: 2px; }
+    .el .rotate { width: 16px; height: 16px; margin-left: -8px; bottom: -36px; }
+    .el .rotate::after { height: 12px; }
     .sel-bar {
-      top: auto; left: 8px; right: 8px; bottom: calc(8px + env(safe-area-inset-bottom));
+      left: 12px; right: 12px; bottom: calc(8px + env(safe-area-inset-bottom));
       flex-wrap: wrap; gap: 2px;
     }
     .sel-bar button { flex: 1 1 30%; padding: 9px 6px; font-size: 13px; }
@@ -773,11 +794,14 @@
     </div>
   </div>
   </div>
-  <!-- Zoom controls: shown on phones and touch screens, where the whole board is small -->
-  <div class="zoom" id="zoomCtl" role="group">
-    <button id="zoomOut" aria-label="Zoom out" data-i18n-title="zoomOut">−</button>
-    <button id="zoomFit" data-i18n="zoomFit" data-i18n-title="zoomFitHint">Fit</button>
-    <button id="zoomIn" aria-label="Zoom in" data-i18n-title="zoomIn">+</button>
+  <!-- Hint + zoom controls: shown on phones and touch screens, where the whole board is small -->
+  <div class="board-bar" id="boardBar">
+    <span class="board-hint" id="boardHint"></span>
+    <div class="zoom" id="zoomCtl" role="group">
+      <button id="zoomOut" aria-label="Zoom out" data-i18n-title="zoomOut">−</button>
+      <button id="zoomFit" data-i18n-title="zoomFitHint">100%</button>
+      <button id="zoomIn" aria-label="Zoom in" data-i18n-title="zoomIn">+</button>
+    </div>
   </div>
 </div>
 
@@ -1052,7 +1076,8 @@
       defaultTitle: 'Pin Your Someday',
       renameHint: 'Click to rename',
       tabBoard: 'Board', tabDreams: 'Dreams', tabAbout: 'About',
-      zoomIn: 'Zoom in', zoomOut: 'Zoom out', zoomFit: 'Fit', zoomFitHint: 'Show the whole board',
+      zoomIn: 'Zoom in', zoomOut: 'Zoom out', zoomFitHint: 'Show the whole board',
+      hintTap: 'Tap a card to select it.', hintSelected: 'Drag to move. Use the dots to resize or rotate.', hintZoomed: 'Swipe to look around.',
       boardDate: 'Board date', jumpBoard: 'Jump to a saved board',
       savedBoards: n => `Saved boards (${n})`,
       addDream: '+ Dream', addDreamHint: 'Add a dream card (you can also drop or paste a photo)',
@@ -1134,7 +1159,8 @@
       defaultTitle: '오늘의 꿈, 언젠가 다시',
       renameHint: '클릭해서 이름 바꾸기',
       tabBoard: '보드', tabDreams: '꿈 보관함', tabAbout: '소개',
-      zoomIn: '확대', zoomOut: '축소', zoomFit: '맞춤', zoomFitHint: '보드 전체 보기',
+      zoomIn: '확대', zoomOut: '축소', zoomFitHint: '보드 전체 보기',
+      hintTap: '카드를 누르면 선택돼요.', hintSelected: '끌어서 옮기고, 동그라미로 크기와 각도를 바꿔요.', hintZoomed: '밀어서 둘러보세요.',
       boardDate: '보드 날짜', jumpBoard: '저장된 보드로 이동',
       savedBoards: n => `저장된 보드 (${n})`,
       addDream: '+ 꿈', addDreamHint: '꿈 카드 추가 (사진을 끌어다 놓거나 붙여 넣어도 돼요)',
@@ -1213,7 +1239,8 @@
       pubHint: '카드를 누르면 크게 볼 수 있어요.', pubClose: '아무 곳이나 누르면 닫혀요',
     },
   };
-  let lang = localStorage.getItem(LANG_KEY) || ((navigator.language || '').toLowerCase().startsWith('ko') ? 'ko' : 'en');
+  // English by default; a language picked with the EN | 한국어 switch is remembered.
+  let lang = localStorage.getItem(LANG_KEY) || 'en';
   if (!I18N[lang]) lang = 'en';
   /** Looks up a UI string in the current language (falls back to English); function entries take arguments. */
   function t(key, ...args) {
@@ -1234,6 +1261,7 @@
   const emptyMsg = $('empty'), statusEl = $('status'), titleEl = $('title');
   const dateInput = $('date'), boardsSelect = $('boards'), copyBtn = $('copyFrom');
   const selBar = $('selBar'), boardScroll = $('boardScroll');
+  const boardBar = $('boardBar'), boardHint = $('boardHint');
   // Phones in portrait get a docked toolbar; any touch screen gets zoom and finger-sized handles.
   const narrowMQ = matchMedia('(max-width: 720px)');
   const touchMQ = matchMedia('(pointer: coarse), (max-width: 720px)');
@@ -1783,13 +1811,12 @@
       if (headingSelected) node = !headingEditing && !headingOf(board).hidden ? headingEl : null;
       else if (selectedId) node = nodes.get(selectedId);
     }
-    if (!node) { selBar.hidden = true; return; }
-    selBar.dataset.mode = node === headingEl ? 'heading' : 'card';
-    selBar.hidden = false;
-    if (narrowMQ.matches) {          // docked to the bottom by CSS on phones
-      selBar.style.top = selBar.style.left = '';
-      return;
-    }
+    selBar.hidden = !node;
+    if (node) selBar.dataset.mode = node === headingEl ? 'heading' : 'card';
+    if (narrowMQ.matches) { layoutPhoneBoard(!!node); return; }
+    boardBar.style.top = boardBar.style.bottom = '';     // back to the CSS corner position
+    boardBar.classList.remove('floating');
+    if (!node) return;
     const s = stage.getBoundingClientRect(), r = node.getBoundingClientRect();
     const w = selBar.offsetWidth, barH = selBar.offsetHeight;
     const handleGap = touchMQ.matches ? 56 : 50 * scale;   // on touch the rotate handle has a fixed screen size
@@ -1800,6 +1827,33 @@
     selBar.style.left = Math.round(left) + 'px';
   }
   selBar.addEventListener('pointerdown', e => e.stopPropagation());
+
+  /**
+   * Phones in portrait: the board sits at the top, with the hint + zoom bar right under it and the
+   * card toolbar under that. When zoomed in (the board fills the stage) both float at the bottom.
+   */
+  function layoutPhoneBoard(hasSelection) {
+    const zoomed = zoom > 1.001;
+    const hasCards = !!(board && board.elements.length);
+    boardHint.textContent = !hasCards ? '' : hasSelection ? t('hintSelected') : zoomed ? t('hintZoomed') : t('hintTap');
+    boardBar.classList.toggle('floating', zoomed);
+    selBar.style.left = '';
+    const s = stage.getBoundingClientRect(), w = boardWrap.getBoundingClientRect();
+    const barH = boardBar.offsetHeight, selH = hasSelection ? selBar.offsetHeight : 0;
+    const below = w.bottom - s.top + 12;
+    const fitsBelow = below + barH + (selH ? selH + 10 : 0) <= s.height - 8;
+    if (!zoomed && fitsBelow) {
+      boardBar.style.top = below + 'px';
+      boardBar.style.bottom = 'auto';
+      selBar.style.top = below + barH + 10 + 'px';
+      selBar.style.bottom = 'auto';
+    } else {
+      selBar.style.top = 'auto';
+      selBar.style.bottom = '';
+      boardBar.style.top = 'auto';
+      boardBar.style.bottom = 10 + (selH ? selH + 8 : 0) + 'px';
+    }
+  }
 
   function select(id) {
     if (selectedId === id && !headingSelected) return;
@@ -2863,7 +2917,9 @@ ${css}
     // remember the board point at the centre of the view, so zooming keeps it there
     const centre = zoom > 1 || boardScroll.classList.contains('zoomed')
       ? toBoard(r.left + r.width / 2, r.top + r.height / 2) : null;
-    let fitScale = Math.min((r.width - padding * 2) / BOARD_W, (r.height - padding * 2) / BOARD_H);
+    // on phones, leave room under the board for the hint/zoom bar and the card toolbar
+    const reserve = narrowMQ.matches ? 150 : 0;
+    let fitScale = Math.min((r.width - padding * 2) / BOARD_W, (r.height - padding * 2 - reserve) / BOARD_H);
     fitScale = Math.max(fitScale, touch ? 0.1 : 0.2);
     const maxZoom = Math.max(1, MAX_SCALE / fitScale);
     zoom = Math.min(Math.max(zoom, 1), maxZoom);
@@ -2882,8 +2938,8 @@ ${css}
       boardScroll.scrollTop += b.top + centre.y * scale - (r.top + r.height / 2);
     }
     $('zoomOut').disabled = zoom <= 1.001;
-    $('zoomFit').disabled = zoom <= 1.001;
     $('zoomIn').disabled = zoom >= maxZoom - 0.001;
+    $('zoomFit').textContent = Math.round(zoom * 100) + '%';   // 100% = the whole board; tap to return to it
     updateToolbar();
   }
   function setZoom(next) { zoom = next; fit(); }
