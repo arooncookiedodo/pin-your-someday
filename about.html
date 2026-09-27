@@ -101,8 +101,17 @@
   footer a { color: var(--orange); }
 
   @media (max-width: 720px) {
-    .page { margin: 0; border-radius: 0; padding: 40px 24px; }
+    .page { margin: 0; border-radius: 0; padding: 32px 20px 40px; }
     h1 { font-size: 36px; }
+    .lead { font-size: 17px; }
+    h2 { font-size: 24px; margin: 48px 0 16px; }
+    .steps { gap: 18px; }
+    /* shortcut table: stack each row so the descriptions get the full width */
+    th, td { display: block; width: auto; padding: 0; border: 0; }
+    th { padding-top: 12px; font-size: 13px; }
+    td { padding: 2px 0 12px; border-bottom: 1px solid var(--light); }
+    .note { padding: 18px 20px; }
+    footer { margin-top: 44px; }
   }
 </style>
 </head>

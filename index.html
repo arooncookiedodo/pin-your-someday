@@ -298,7 +298,31 @@
       linear-gradient(180deg, #BFD5EC 0%, #D6E4F2 38%, #E9ECEC 72%, #F3ECDF 100%);
   }
   .stage .sky .stars { display: none; }
-  .stage .board-wrap { z-index: 1; }
+  /* The board sits in its own scroller so it can be zoomed and panned on small screens. */
+  .board-scroll { position: absolute; inset: 0; z-index: 1; display: flex; overflow: hidden; }
+  .board-scroll.zoomed { overflow: auto; -webkit-overflow-scrolling: touch; }
+  .board-scroll > .board-wrap { margin: auto; }
+  .board-scroll.zoomed > .board-wrap { margin: var(--pad, 12px); }
+  .zoom {
+    position: absolute; z-index: 40; display: none; gap: 2px; padding: 3px;
+    background: rgba(255, 255, 255, .92); border: 1px solid var(--light); border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(20, 20, 19, .12);
+  }
+  .zoom button {
+    font: inherit; font-size: 14px; min-width: 38px; height: 34px; padding: 0 10px;
+    border: 0; border-radius: 7px; background: none; color: var(--dark); cursor: pointer;
+  }
+  .zoom #zoomIn, .zoom #zoomOut { font-size: 20px; line-height: 1; }
+  .zoom button:disabled { color: var(--mid); cursor: default; }
+  .zoom button:not(:disabled):active { background: var(--light); }
+  /* Handles and outlines keep a steady on-screen size however small the board is drawn (--ui = 1 / scale on touch). */
+  .board { --ui: 1; }
+  .el .resize, .heading .resize, .el .rotate { zoom: var(--ui); }
+  .board .el.selected { outline-width: calc(2px * var(--ui)); outline-offset: calc(6px * var(--ui)); }
+  .board .heading.selected { outline-width: calc(2px * var(--ui)); outline-offset: calc(4px * var(--ui)); }
+  /* Touch: a swipe on an unselected card scrolls; tap selects it, then it can be dragged. */
+  .board .el, .board .heading { touch-action: pan-x pan-y; }
+  .board .el.selected, .board .heading.selected { touch-action: none; }
   .board.dragover::after {
     content: attr(data-drop-label); position: absolute; inset: 30px;
     display: flex; align-items: center; justify-content: center;
@@ -567,6 +591,112 @@
     .dialog { grid-template-columns: 1fr; }
     .drop { aspect-ratio: 4 / 3; }
   }
+
+  /* ================= Touch screens (phones and tablets) ================= */
+  @media (pointer: coarse), (max-width: 720px) {
+    .zoom { display: flex; top: 10px; right: 10px; }
+    .el .resize, .heading .resize { width: 24px; height: 24px; right: -13px; bottom: -13px; }
+    .el .rotate { width: 24px; height: 24px; margin-left: -12px; bottom: -50px; }
+    .el .rotate::after { height: 18px; }
+    /* The empty-board message stays readable at any board scale. */
+    .empty { zoom: var(--ui); padding: 16px; line-height: 1.6; font-size: 15px; }
+    .empty .big { font-size: 26px; }
+    .empty .big::after { margin: 10px auto 6px; }
+    .empty .ctas { margin-top: 14px; flex-wrap: wrap; justify-content: center; }
+    .empty .btn { font-size: 15px; padding: 9px 16px; }
+  }
+
+  /* ================= Phones in portrait (and other narrow windows) ================= */
+  @media (max-width: 720px) {
+    @supports (height: 100dvh) { html, body { height: 100dvh; } }
+
+    /* Header in three rows: title + actions · tabs + language · board date + add */
+    header { padding: 8px 10px; gap: 6px; padding-top: max(8px, env(safe-area-inset-top)); }
+    header::after, header::before { content: ""; flex-basis: 100%; height: 0; }
+    header::after { order: 4; }
+    header::before { order: 7; }
+    .title, .title-input { order: 0; flex: 1 1 0; min-width: 0; max-width: none; font-size: 19px; margin: 0; padding: 3px 6px; }
+    .title-input { width: auto; font-size: 16px; }
+    #archiveBtn { order: 1; }
+    .keep-wrap { order: 2; }
+    .more-wrap { order: 3; }
+    .tabs { order: 5; flex: 1 1 auto; }
+    .tabs button { flex: 1; padding: 6px 8px; }
+    .lang { order: 6; }
+    .lang button { padding: 4px 10px; }
+    #date { order: 8; flex: 0 1 auto; min-width: 0; }
+    #boards { order: 9; flex: 1 1 0; min-width: 0; }
+    .sep, .spacer { display: none; }
+    #addDream { order: 10; }
+    .status { order: 11; display: none; }
+    .status.error { display: block; flex-basis: 100%; text-align: left; }
+    .btn { padding: 7px 10px; }
+    .btn.icon { padding: 5px 10px; }
+    /* 16px text stops iOS from zooming into a field when it is focused. */
+    .field, .form .field, .topline .field { font-size: 16px; }
+    .menu { min-width: 0; width: max-content; max-width: calc(100vw - 20px); }
+    body[data-view="about"] header::before { display: none; }
+
+    /* Selection toolbar docks to the bottom of the screen instead of floating above the card. */
+    .sel-bar {
+      top: auto; left: 8px; right: 8px; bottom: calc(8px + env(safe-area-inset-bottom));
+      flex-wrap: wrap; gap: 2px;
+    }
+    .sel-bar button { flex: 1 1 30%; padding: 9px 6px; font-size: 13px; }
+    .sel-bar .bar-sep { display: none; }
+    .toast { bottom: calc(96px + env(safe-area-inset-bottom)); }
+
+    /* Dreams: two columns of smaller cards */
+    .dwrap { padding: 20px 12px calc(40px + env(safe-area-inset-bottom)); }
+    .topline { gap: 12px; }
+    .topline h2 { font-size: 30px; }
+    .topline h2 .count { font-size: 19px; }
+    .topline .tools { margin-left: 0; width: 100%; }
+    .search { flex: 1 1 100%; width: auto; min-width: 0; }
+    #dSort { flex: 1 1 0; min-width: 0; }
+    .chips { margin: 16px 0 20px; gap: 6px; }
+    .dgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 12px; }
+    .dcard .pic { margin: 8px 8px 0; }
+    .dcard .pic.text { font-size: 44px; }
+    .dcard .body { padding: 10px 10px 8px; }
+    .dcard h3 { font-size: 16px; }
+    .dcard .meta { font-size: 12px; gap: 6px; }
+    .dcard .desc { font-size: 13px; }
+    .dcard .foot { padding: 0 10px 10px; flex-wrap: wrap; gap: 6px; }
+    .dcard .foot .btn { flex: 1 1 auto; padding: 6px 8px; font-size: 12px; }
+    .dcard .foot .used { margin-left: 0; }
+    .new-card { min-height: 200px; }
+    .new-card b { font-size: 32px; }
+
+    /* Dream dialog: tighter, with the buttons always in reach */
+    .overlay { padding: 10px; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+    .dialog { gap: 14px; padding: 16px 16px 0; border-radius: 12px; }
+    .drop { max-height: 30vh; }
+    .form h3 { font-size: 22px; margin: 0 0 6px; }
+    .form label { margin: 10px 0 4px; }
+    .form textarea.field { min-height: 64px; }
+    .actions {
+      position: sticky; bottom: 0; margin: 18px -16px 0; padding: 12px 16px 16px;
+      background: var(--ivory); border-top: 1px solid var(--light);
+    }
+
+    /* Archive panel fills the screen */
+    .panel { width: 100vw; border-left: 0; }
+    .panel-head { padding: 14px 16px 4px; padding-top: max(14px, env(safe-area-inset-top)); }
+    .panel-sub { padding: 0 16px 12px; }
+    .archive-list { padding: 4px 16px calc(30px + env(safe-area-inset-bottom)); }
+
+    /* About */
+    .about-view .page { padding: 32px 20px 40px; }
+    .about-view .lead { font-size: 17px; }
+    .about-view h2 { font-size: 24px; margin: 48px 0 16px; }
+    .about-view .steps { gap: 18px; }
+    .about-view th, .about-view td { display: block; width: auto; padding: 0; border: 0; }
+    .about-view th { padding-top: 12px; font-size: 13px; }
+    .about-view td { padding: 2px 0 12px; border-bottom: 1px solid var(--light); }
+    .about-view .about-note { padding: 18px 20px; }
+    .about-view .about-foot { margin-top: 44px; }
+  }
 </style>
 </head>
 <body data-view="board">
@@ -585,14 +715,14 @@
   <span class="spacer"></span>
   <span class="status" id="status"></span>
   <button class="btn" id="archiveBtn" data-i18n="archive">Archive</button>
-  <div class="menu-wrap">
+  <div class="menu-wrap keep-wrap">
     <button class="btn primary" data-menu="keepMenu" aria-haspopup="true" data-i18n="keep">Keep ▾</button>
     <div class="menu" id="keepMenu" hidden>
       <button id="saveArchive"><b data-i18n="saveArchive">Save to archive…</b><small data-i18n="saveArchiveSub">Keep this version to look back on later</small></button>
       <button id="publish"><b data-i18n="publish">Publish as HTML</b><small data-i18n="publishSub">Download a read-only copy to share</small></button>
     </div>
   </div>
-  <div class="menu-wrap">
+  <div class="menu-wrap more-wrap">
     <button class="btn icon" data-menu="moreMenu" title="More" aria-label="More" aria-haspopup="true" data-i18n-title="more">⋯</button>
     <div class="menu" id="moreMenu" hidden>
       <button id="openAbout"><b data-i18n="aboutMenu">About Pin Your Someday</b><small data-i18n="aboutMenuSub">What this is and how to use it</small></button>
@@ -629,6 +759,7 @@
     <span class="bar-sep" data-for="heading"></span>
     <button id="selHeadHide" data-for="heading" class="danger" data-i18n="headHide" data-i18n-title="headHideHint">Hide title</button>
   </div>
+  <div class="board-scroll" id="boardScroll">
   <div class="board-wrap" id="boardWrap">
     <div class="board" id="board">
       <div class="empty" id="empty">
@@ -640,6 +771,13 @@
         </div>
       </div>
     </div>
+  </div>
+  </div>
+  <!-- Zoom controls: shown on phones and touch screens, where the whole board is small -->
+  <div class="zoom" id="zoomCtl" role="group">
+    <button id="zoomOut" aria-label="Zoom out" data-i18n-title="zoomOut">−</button>
+    <button id="zoomFit" data-i18n="zoomFit" data-i18n-title="zoomFitHint">Fit</button>
+    <button id="zoomIn" aria-label="Zoom in" data-i18n-title="zoomIn">+</button>
   </div>
 </div>
 
@@ -914,6 +1052,7 @@
       defaultTitle: 'Pin Your Someday',
       renameHint: 'Click to rename',
       tabBoard: 'Board', tabDreams: 'Dreams', tabAbout: 'About',
+      zoomIn: 'Zoom in', zoomOut: 'Zoom out', zoomFit: 'Fit', zoomFitHint: 'Show the whole board',
       boardDate: 'Board date', jumpBoard: 'Jump to a saved board',
       savedBoards: n => `Saved boards (${n})`,
       addDream: '+ Dream', addDreamHint: 'Add a dream card (you can also drop or paste a photo)',
@@ -989,11 +1128,13 @@
       confirmDeleteSnap: 'Delete this archived version? This can\'t be undone.',
       titleHidden: 'Board title hidden — show it again from the ⋯ menu',
       pubLabel: 'Published', archLabel: 'Saved to archive',
+      pubHint: 'Tap a card to see it up close.', pubClose: 'Tap anywhere to close',
     },
     ko: {
       defaultTitle: '오늘의 꿈, 언젠가 다시',
       renameHint: '클릭해서 이름 바꾸기',
       tabBoard: '보드', tabDreams: '꿈 보관함', tabAbout: '소개',
+      zoomIn: '확대', zoomOut: '축소', zoomFit: '맞춤', zoomFitHint: '보드 전체 보기',
       boardDate: '보드 날짜', jumpBoard: '저장된 보드로 이동',
       savedBoards: n => `저장된 보드 (${n})`,
       addDream: '+ 꿈', addDreamHint: '꿈 카드 추가 (사진을 끌어다 놓거나 붙여 넣어도 돼요)',
@@ -1069,6 +1210,7 @@
       confirmDeleteSnap: '이 버전을 삭제할까요? 되돌릴 수 없어요.',
       titleHidden: '보드 타이틀을 숨겼어요 — ⋯ 메뉴에서 다시 보이게 할 수 있어요',
       pubLabel: '발행', archLabel: '아카이브에 간직함',
+      pubHint: '카드를 누르면 크게 볼 수 있어요.', pubClose: '아무 곳이나 누르면 닫혀요',
     },
   };
   let lang = localStorage.getItem(LANG_KEY) || ((navigator.language || '').toLowerCase().startsWith('ko') ? 'ko' : 'en');
@@ -1091,7 +1233,10 @@
   const stage = $('stage'), boardWrap = $('boardWrap'), boardEl = $('board');
   const emptyMsg = $('empty'), statusEl = $('status'), titleEl = $('title');
   const dateInput = $('date'), boardsSelect = $('boards'), copyBtn = $('copyFrom');
-  const selBar = $('selBar');
+  const selBar = $('selBar'), boardScroll = $('boardScroll');
+  // Phones in portrait get a docked toolbar; any touch screen gets zoom and finger-sized handles.
+  const narrowMQ = matchMedia('(max-width: 720px)');
+  const touchMQ = matchMedia('(pointer: coarse), (max-width: 720px)');
 
   /**
    * A dream card. Board cards and Dreams share these fields; board cards add a position.
@@ -1110,6 +1255,7 @@
   let savedDates = [];        // dates (YYYY-MM-DD) that have a stored board, sorted
   let selectedId = null;
   let scale = 1;
+  let zoom = 1;               // extra magnification on top of "fit the whole board" (touch screens)
   let view = 'board';
   let headingSelected = false;   // the board title (not a card) is selected
 
@@ -1309,7 +1455,13 @@
 
   function centerSpot(w, h) {
     const jitter = () => Math.random() * 160 - 80;
-    return { x: Math.round(BOARD_W / 2 - w / 2 + jitter()), y: Math.round(BOARD_H / 2 - h / 2 + jitter()) };
+    // when zoomed in, new cards land in the middle of what is on screen
+    let cx = BOARD_W / 2, cy = BOARD_H / 2;
+    if (zoom > 1.001) {
+      const r = boardScroll.getBoundingClientRect();
+      if (r.width) ({ x: cx, y: cy } = toBoard(r.left + r.width / 2, r.top + r.height / 2));
+    }
+    return { x: Math.round(cx - w / 2 + jitter()), y: Math.round(cy - h / 2 + jitter()) };
   }
 
   function toBoard(clientX, clientY) {
@@ -1568,10 +1720,13 @@
     node.dataset.id = el.id;
     fillNode(node, el);
     node.addEventListener('pointerdown', e => {
+      // On touch, an unselected card lets the finger scroll the board; a tap (click) selects it.
+      if (e.pointerType === 'touch' && el.id !== selectedId) return;
       if (e.target.closest('.resize')) startResize(e, el.id);
       else if (e.target.closest('.rotate')) startRotate(e, el.id);
       else startDrag(e, el.id);
     });
+    node.addEventListener('click', () => { if (el.id !== selectedId) select(el.id); });
     node.addEventListener('dblclick', () => openBoardEdit(el.id));
     return node;
   }
@@ -1631,10 +1786,15 @@
     if (!node) { selBar.hidden = true; return; }
     selBar.dataset.mode = node === headingEl ? 'heading' : 'card';
     selBar.hidden = false;
+    if (narrowMQ.matches) {          // docked to the bottom by CSS on phones
+      selBar.style.top = selBar.style.left = '';
+      return;
+    }
     const s = stage.getBoundingClientRect(), r = node.getBoundingClientRect();
     const w = selBar.offsetWidth, barH = selBar.offsetHeight;
+    const handleGap = touchMQ.matches ? 56 : 50 * scale;   // on touch the rotate handle has a fixed screen size
     let top = r.top - s.top - barH - 14;
-    if (top < 8) top = r.bottom - s.top + 14 + (node === headingEl ? 0 : 50 * scale); // clear the rotate handle
+    if (top < 8) top = r.bottom - s.top + 14 + (node === headingEl ? 0 : handleGap); // clear the rotate handle
     const left = Math.min(Math.max(r.left - s.left + r.width / 2 - w / 2, 8), s.width - w - 8);
     selBar.style.top = Math.round(top) + 'px';
     selBar.style.left = Math.round(left) + 'px';
@@ -1683,8 +1843,12 @@
     toast(t('titleHidden'));
   }
 
+  headingEl.addEventListener('click', () => {
+    if (!headingSelected && !headingEditing) { selectedId = null; headingSelected = true; render(); }
+  });
   headingEl.addEventListener('pointerdown', e => {
     if (e.button !== 0 || headingEditing) return;
+    if (e.pointerType === 'touch' && !headingSelected) return;   // tap selects, swipe scrolls
     e.preventDefault();
     e.stopPropagation();
     if (!headingSelected) { selectedId = null; headingSelected = true; render(); }
@@ -1904,8 +2068,9 @@
     if (e.target === boardEl || e.target === emptyMsg) select(null);
   });
   stage.addEventListener('pointerdown', e => {
-    if (e.target === stage || e.target === boardWrap) select(null);
+    if (e.target === stage || e.target === boardWrap || e.target === boardScroll) select(null);
   });
+  boardScroll.addEventListener('scroll', () => updateToolbar(), { passive: true });
 
   // ================= Selection toolbar =================
   $('selEdit').addEventListener('click', () => { if (selectedId) openBoardEdit(selectedId); });
@@ -2392,7 +2557,29 @@ ${css}
   .masthead::after { content: ""; display: block; width: 56px; height: 4px; background: var(--orange); border-radius: 2px; margin-top: 18px; }
   .memo { margin: -8px 0 28px; max-width: 760px; font-family: var(--serif); font-style: italic; font-size: 18px; color: #3f3e3a; white-space: pre-wrap; }
   .el { cursor: default; }
+  .el, .heading { touch-action: auto; }   /* read-only: let fingers pinch-zoom and scroll anywhere */
   footer { margin-top: 28px; color: var(--muted); font-size: 13px; text-align: right; }
+  .hint { display: none; margin: 12px 0 0; color: var(--muted); font-size: 13px; text-align: center; }
+  .zoomable .el { cursor: zoom-in; }
+  .zoomable + .hint { display: block; }
+  /* Tap a card to see it up close (used when the board is drawn small, e.g. on phones). */
+  .lightbox {
+    position: fixed; inset: 0; z-index: 10; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 22px; padding: 16px;
+    background: rgba(20, 20, 19, .6); cursor: zoom-out;
+  }
+  .lightbox[hidden] { display: none; }
+  .lightbox .el { position: relative; left: auto !important; top: auto !important; flex: none; transform: rotate(0deg) scale(var(--s, 1)); }
+  .lightbox .close { color: rgba(250, 249, 245, .85); font-size: 13px; }
+  @media (max-width: 720px) {
+    .page { padding: 24px 12px 28px; }
+    .masthead { margin-bottom: 18px; }
+    .masthead h1 { font-size: 28px; }
+    .masthead .date { font-size: 12px; }
+    .masthead::after { margin-top: 12px; }
+    .memo { margin: -4px 0 18px; font-size: 16px; }
+    footer { margin-top: 18px; font-size: 12px; }
+  }
 </style>
 </head>
 <body>
@@ -2407,20 +2594,44 @@ ${css}
     ${heading}${items}
     </div>
   </div>
+  <p class="hint">${t('pubHint')}</p>
   <footer>${label} <time datetime="${pubIso}">${pubText}</time></footer>
 </div>
+<div class="lightbox" id="lightbox" hidden><span class="close">${t('pubClose')}</span></div>
 <script>
-  // Scale the fixed-size board to the page width.
+  // Scale the fixed-size board to the page's content width.
   (function () {
     var wrap = document.getElementById('wrap'), board = document.getElementById('board');
+    var box = document.getElementById('lightbox'), s = 1;
     function fit() {
-      var s = Math.min(1, wrap.parentNode.clientWidth / ${BOARD_W});
+      var page = wrap.parentNode, cs = getComputedStyle(page);
+      var width = page.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+      s = Math.min(1, width / ${BOARD_W});
       board.style.transform = 'scale(' + s + ')';
       wrap.style.width = ${BOARD_W} * s + 'px';
       wrap.style.height = ${BOARD_H} * s + 'px';
+      wrap.classList.toggle('zoomable', s < 0.75);
     }
     window.addEventListener('resize', fit);
     fit();
+    // When the board is drawn small, tapping a card shows it large.
+    board.addEventListener('click', function (e) {
+      var card = e.target.closest('.el');
+      if (!card || s >= 0.75) return;
+      var copy = card.cloneNode(true), w = card.offsetWidth, h = card.offsetHeight;
+      var k = Math.min((innerWidth - 40) / w, (innerHeight - 110) / h, 2.2);
+      copy.style.zIndex = '';
+      copy.style.setProperty('--s', k);
+      copy.style.margin = (h * (k - 1) / 2) + 'px ' + (w * (k - 1) / 2) + 'px';
+      box.insertBefore(copy, box.firstChild);
+      box.hidden = false;
+    });
+    box.addEventListener('click', function () {
+      box.hidden = true;
+      var c = box.querySelector('.el');
+      if (c) c.remove();
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !box.hidden) box.click(); });
   })();
 <\/script>
 </body>
@@ -2641,20 +2852,46 @@ ${css}
   document.querySelectorAll('.lang [data-lang]').forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
 
   // ================= Fit board to window =================
+  // On touch screens the board can also be zoomed in (buttons at the top right) and panned by swiping.
+  const ZOOM_STEP = 1.5, MAX_SCALE = 1.2;
   function fit() {
-    const padding = 32;
-    const r = stage.getBoundingClientRect();
+    const touch = touchMQ.matches;
+    const padding = narrowMQ.matches ? 12 : 32;
+    const r = boardScroll.getBoundingClientRect();
     if (!r.width) return; // stage hidden (Dreams view)
-    scale = Math.min((r.width - padding * 2) / BOARD_W, (r.height - padding * 2) / BOARD_H);
-    scale = Math.max(scale, 0.2);
+    if (!touch) zoom = 1;
+    // remember the board point at the centre of the view, so zooming keeps it there
+    const centre = zoom > 1 || boardScroll.classList.contains('zoomed')
+      ? toBoard(r.left + r.width / 2, r.top + r.height / 2) : null;
+    let fitScale = Math.min((r.width - padding * 2) / BOARD_W, (r.height - padding * 2) / BOARD_H);
+    fitScale = Math.max(fitScale, touch ? 0.1 : 0.2);
+    const maxZoom = Math.max(1, MAX_SCALE / fitScale);
+    zoom = Math.min(Math.max(zoom, 1), maxZoom);
+    scale = fitScale * zoom;
+    boardScroll.style.setProperty('--pad', padding + 'px');
+    boardScroll.classList.toggle('zoomed', zoom > 1.001);
     boardEl.style.width = BOARD_W + 'px';
     boardEl.style.height = BOARD_H + 'px';
     boardEl.style.transform = `scale(${scale})`;
+    boardEl.style.setProperty('--ui', touch ? String(1 / scale) : '1');
     boardWrap.style.width = BOARD_W * scale + 'px';
     boardWrap.style.height = BOARD_H * scale + 'px';
+    if (centre && zoom > 1.001) {
+      const b = boardEl.getBoundingClientRect();
+      boardScroll.scrollLeft += b.left + centre.x * scale - (r.left + r.width / 2);
+      boardScroll.scrollTop += b.top + centre.y * scale - (r.top + r.height / 2);
+    }
+    $('zoomOut').disabled = zoom <= 1.001;
+    $('zoomFit').disabled = zoom <= 1.001;
+    $('zoomIn').disabled = zoom >= maxZoom - 0.001;
     updateToolbar();
   }
+  function setZoom(next) { zoom = next; fit(); }
+  $('zoomIn').addEventListener('click', () => setZoom(zoom * ZOOM_STEP));
+  $('zoomOut').addEventListener('click', () => setZoom(zoom / ZOOM_STEP < 1.2 ? 1 : zoom / ZOOM_STEP));
+  $('zoomFit').addEventListener('click', () => setZoom(1));
   window.addEventListener('resize', fit);
+  touchMQ.addEventListener('change', fit);
 
   // ================= Init =================
   /** One-time move of the old single localStorage board into today's date. */
