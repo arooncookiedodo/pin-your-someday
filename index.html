@@ -331,6 +331,23 @@
   .el .resize, .heading .resize, .el .rotate { zoom: var(--ui); }
   .board .el.selected { outline-width: calc(2px * var(--ui)); outline-offset: calc(6px * var(--ui)); }
   .board .heading.selected { outline-width: calc(2px * var(--ui)); outline-offset: calc(4px * var(--ui)); }
+  /* ---------- Portrait "paper" (narrow screens): cards flow down in two columns ----------
+     Each card keeps its own shape and is scaled to the column (--k); saved positions are untouched. */
+  .board-scroll.flow { overflow-x: hidden; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .board-scroll.flow:not(.zoomed) > .board-wrap { margin: 12px auto 110px; }
+  .board.flow .el { transform: rotate(var(--tilt, 0deg)) scale(var(--k, 1)); cursor: pointer; }
+  .board.flow .el.pin-in, .board.flow .el.pin-in::before { animation: none; }
+  .board.flow .el, .board.flow .el.selected, .board.flow .heading, .board.flow .heading.selected { touch-action: pan-x pan-y; }
+  .board-scroll.flow ~ .board-bar { display: none; }   /* no zoom needed: the paper already fits */
+  .board.flow .resize, .board.flow .rotate { display: none !important; }
+  .board.flow .heading { cursor: default; }
+  .flow-note {
+    display: none; position: absolute; left: 16px; right: 16px; margin: 0; text-align: center;
+    font-size: 12.5px; line-height: 1.4; color: var(--muted); word-break: keep-all;
+  }
+  .board.flow .flow-note { display: block; }
+  .sel-bar[data-flow] #toFront, .sel-bar[data-flow] #toBack,
+  .sel-bar[data-flow] #selStraight, .sel-bar[data-flow] .bar-sep { display: none; }
   /* Touch: a swipe on an unselected card scrolls; tap selects it, then it can be dragged. */
   .board .el, .board .heading { touch-action: pan-x pan-y; }
   .board .el.selected, .board .heading.selected { touch-action: none; }
@@ -653,7 +670,7 @@
     body[data-view="about"] header::before { display: none; }
 
     /* Board sits at the top; the hint/zoom bar and the card toolbar follow right under it (placed by JS). */
-    .board-scroll:not(.zoomed) > .board-wrap { margin: var(--pad, 12px) auto auto; }
+    .board-scroll:not(.zoomed):not(.flow) > .board-wrap { margin: var(--pad, 12px) auto auto; }
     .board-bar { left: 12px; right: 12px; }
     .board-hint { display: block; }
     .el .resize, .heading .resize { width: 16px; height: 16px; right: -9px; bottom: -9px; border-width: 2px; }
@@ -934,7 +951,7 @@
       완성된 보드를 HTML 파일로 발행해 간직하거나 공유할 수 있습니다.
     </p>
 
-    <div class="cta-row"><button class="cta" data-go="board">내 꿈 붙이러 가기 →</button><button class="cta ghost" data-go="dreams">꿈 보관함 보기</button></div>
+    <div class="cta-row"><button class="cta" data-go="board">내 꿈 붙이러 가기 →</button><button class="cta ghost" data-go="dreams">보관함 보기</button></div>
 
     <h2>사용법</h2>
     <ol class="steps">
@@ -951,8 +968,8 @@
         <p><em>+ 꿈</em>을 누르면 꿈 카드 폼이 열려요. 사진, 제목, 설명, 카테고리, 원하는 시기를 적고 <em>보드에 붙이기</em>를 누르세요. 사진을 보드로 끌어다 놓거나 <kbd>Ctrl</kbd>+<kbd>V</kbd>로 붙여 넣어도 사진이 담긴 폼이 열려요.</p>
       </li>
       <li>
-        <b>꿈 보관함</b>
-        <p>상단 <em>꿈 보관함</em> 탭은 아직 보드에 붙이지 않은 꿈까지 모아두는 곳이에요. 검색·카테고리·시기순으로 찾고, <em>보드에 붙이기</em>로 지금 보드에 복사해 붙여요. 보드의 카드도 <em>보관함에 저장</em>으로 보관함에 넣을 수 있어요.</p>
+        <b>보관함</b>
+        <p>상단 <em>보관함</em> 탭은 아직 보드에 붙이지 않은 꿈까지 모아두는 곳이에요. 검색·카테고리·시기순으로 찾고, <em>보드에 붙이기</em>로 지금 보드에 복사해 붙여요. 보드의 카드도 <em>보관함에 저장</em>으로 보관함에 넣을 수 있어요.</p>
       </li>
       <li>
         <b>배치하기</b>
@@ -986,7 +1003,7 @@
         <li>브라우저가 다르거나 여는 주소가 다르면 저장 공간도 달라요. 한 곳에서 계속 사용하세요.</li>
         <li>브라우저의 사이트 데이터를 지우면 보드도 함께 지워집니다. 소중한 보드는 발행해서 파일로 보관하세요.</li>
         <li>처음부터 다시 하고 싶다면 오른쪽 위 <em>⋯</em> 메뉴를 쓰세요. <em>이 보드 비우기</em>는 지금 보고 있는 날짜의 보드만,
-          <em>모든 보드 삭제</em>는 저장된 모든 보드를 지웁니다. 되돌릴 수 없어요. 꿈 보관함, 아카이브, 이미 발행한 HTML 파일은 그대로 남아요.</li>
+          <em>모든 보드 삭제</em>는 저장된 모든 보드를 지웁니다. 되돌릴 수 없어요. 보관함, 아카이브, 이미 발행한 HTML 파일은 그대로 남아요.</li>
       </ul>
     </div>
 
@@ -1078,6 +1095,7 @@
       tabBoard: 'Board', tabDreams: 'Dreams', tabAbout: 'About',
       zoomIn: 'Zoom in', zoomOut: 'Zoom out', zoomFitHint: 'Show the whole board',
       hintTap: 'Tap a card to select it.', hintSelected: 'Drag to move. Use the dots to resize or rotate.', hintZoomed: 'Swipe to look around.',
+      flowNote: 'Tap a card to select it, tap again to edit. Arrange cards freely on a wider screen.',
       boardDate: 'Board date', jumpBoard: 'Jump to a saved board',
       savedBoards: n => `Saved boards (${n})`,
       addDream: '+ Dream', addDreamHint: 'Add a dream card (you can also drop or paste a photo)',
@@ -1158,9 +1176,10 @@
     ko: {
       defaultTitle: '오늘의 꿈, 언젠가 다시',
       renameHint: '클릭해서 이름 바꾸기',
-      tabBoard: '보드', tabDreams: '꿈 보관함', tabAbout: '소개',
+      tabBoard: '보드', tabDreams: '보관함', tabAbout: '소개',
       zoomIn: '확대', zoomOut: '축소', zoomFitHint: '보드 전체 보기',
       hintTap: '카드를 누르면 선택돼요.', hintSelected: '끌어서 옮기고, 동그라미로 크기와 각도를 바꿔요.', hintZoomed: '밀어서 둘러보세요.',
+      flowNote: '카드를 누르면 선택되고, 한 번 더 누르면 수정돼요. 자유 배치는 넓은 화면에서 할 수 있어요.',
       boardDate: '보드 날짜', jumpBoard: '저장된 보드로 이동',
       savedBoards: n => `저장된 보드 (${n})`,
       addDream: '+ 꿈', addDreamHint: '꿈 카드 추가 (사진을 끌어다 놓거나 붙여 넣어도 돼요)',
@@ -1172,7 +1191,7 @@
       hideTitle: '보드 타이틀 숨기기', showTitle: '보드 타이틀 보이기', titleMenuSub: '보드 위에 크게 보이는 제목',
       clearBoard: '이 보드 비우기…', resetAll: '모든 보드 삭제…',
       selEdit: '수정', selEditHint: '수정 (Enter 또는 더블클릭)',
-      selKeep: '보관함에 저장', selKeepHint: '이 카드를 꿈 보관함에 복사',
+      selKeep: '보관함에 저장', selKeepHint: '이 카드를 보관함에 복사',
       toFront: '맨 앞으로', toBack: '맨 뒤로',
       straighten: '똑바로', straightenHint: '기울기를 0°로', rotateHint: '끌어서 회전 (Shift: 15° 단위)',
       del: '삭제', delHint: '삭제 (Del / Backspace)',
@@ -1181,10 +1200,10 @@
       resizeHint: '끌어서 크기 조절',
       dropHere: '여기에 사진을 놓으세요',
       emptyBig: '여기에 꿈을 붙여보세요',
-      emptyText: '<b>+ 꿈</b>을 누르거나, 사진을 보드에 끌어다 놓거나, Ctrl+V / ⌘V로 붙여 넣으세요.<br><b>꿈 보관함</b>에 모아둔 꿈을 가져올 수도 있어요.',
+      emptyText: '<b>+ 꿈</b>을 누르거나, 사진을 보드에 끌어다 놓거나, Ctrl+V / ⌘V로 붙여 넣으세요.<br><b>보관함</b>에 모아둔 꿈을 가져올 수도 있어요.',
       emptyAdd: '+ 꿈 추가하기',
       startFrom: d => `${d} 보드에서 시작하기`,
-      dreamsTitle: '꿈 보관함', dreamsSub: '보드에 쓰려고 모아둔 사진, 문장, 아이디어예요.',
+      dreamsTitle: '보관함', dreamsSub: '보드에 쓰려고 모아둔 사진, 문장, 아이디어예요.',
       search: '꿈 검색…',
       sortWhen: '정렬: 원하는 시기', sortNew: '정렬: 최신순', sortTitle: '정렬: 이름순',
       newDream: '+ 새 꿈', newDreamCard: '새 꿈',
@@ -1199,18 +1218,18 @@
       fTitle: '꿈 제목', fTitlePh: '예: 바닷가에서 한 달 살기',
       fDesc: '설명', fDescPh: '왜 중요한지, 어떤 모습인지…',
       fCat: '카테고리', fCatPh: '고르거나 직접 입력',
-      fWhen: '언제 이루고 싶나요?', fKeep: '꿈 보관함에도 저장',
+      fWhen: '언제 이루고 싶나요?', fKeep: '보관함에도 저장',
       cancel: '취소', save: '저장', removeFromBoard: '보드에서 빼기',
       dropPrompt: '클릭해서 사진 추가<br>또는 끌어다 놓기 / 붙여 넣기<br><br><small>선택 사항이에요 — 글만으로도 꿈이 돼요</small>',
       removePhoto: '사진 빼기',
       needTitle: '제목이나 사진을 먼저 넣어 주세요.',
-      addedKept: '보드에 붙이고 꿈 보관함에도 저장했어요', added: '보드에 붙였어요',
+      addedKept: '보드에 붙이고 보관함에도 저장했어요', added: '보드에 붙였어요',
       cardUpdated: '카드를 수정했어요', dreamUpdated: '꿈을 수정했어요', dreamSaved: '꿈을 저장했어요', dreamDeleted: '꿈을 삭제했어요',
       couldNotSave: msg => `저장하지 못했어요 — ${msg}`,
-      confirmDeleteDream: title => `“${title}”을(를) 꿈 보관함에서 삭제할까요?\n\n이미 보드에 붙인 카드는 그대로 남아요.`,
+      confirmDeleteDream: title => `“${title}”을(를) 보관함에서 삭제할까요?\n\n이미 보드에 붙인 카드는 그대로 남아요.`,
       thisDream: '이 꿈',
-      alreadyInDreams: '이미 꿈 보관함에 있어요', savedToDreams: '꿈 보관함에 저장했어요',
-      saveToDreamsFail: '꿈 보관함에 저장하지 못했어요', loadDreamsFail: '꿈 보관함을 불러오지 못했어요',
+      alreadyInDreams: '이미 보관함에 있어요', savedToDreams: '보관함에 저장했어요',
+      saveToDreamsFail: '보관함에 저장하지 못했어요', loadDreamsFail: '보관함을 불러오지 못했어요',
       photoMissing: '사진을 찾을 수 없어요',
       addedToBoard: d => `${d} 보드에 붙였어요`, addFail: '보드에 붙이지 못했어요',
       loading: '불러오는 중…', saving: '저장 중…', saved: '저장됨', saveFail: '저장 실패',
@@ -1218,9 +1237,9 @@
       blockedAlert: '앱이 업데이트됐어요.\n\n이 앱이 열린 다른 탭을 모두 닫아 주세요. 닫으면 이 페이지가 자동으로 이어서 열려요.',
       storageFail: '저장소를 쓸 수 없어요',
       readError: name => `이미지를 읽을 수 없어요: ${name}`, pastedImage: '붙여 넣은 이미지',
-      confirmClear: d => `${d} 보드를 비울까요?\n\n보드의 카드가 모두 지워져요. 꿈 보관함은 그대로예요. 되돌릴 수 없어요.`,
+      confirmClear: d => `${d} 보드를 비울까요?\n\n보드의 카드가 모두 지워져요. 보관함은 그대로예요. 되돌릴 수 없어요.`,
       boardCleared: '보드를 비웠어요', clearFail: '비우지 못했어요',
-      resetPrompt: n => `저장된 보드 ${n}개를 모두 영구 삭제해요. 꿈 보관함, 아카이브, 발행한 HTML 파일은 남아요.\n\n확인하려면 RESET을 입력하세요.`,
+      resetPrompt: n => `저장된 보드 ${n}개를 모두 영구 삭제해요. 보관함, 아카이브, 발행한 HTML 파일은 남아요.\n\n확인하려면 RESET을 입력하세요.`,
       nothingDeleted: '아무것도 삭제하지 않았어요.', allDeleted: '모든 보드를 삭제했어요', resetFail: '초기화하지 못했어요',
       publishEmpty: '보드가 비어 있어요. 그래도 발행할까요?',
       publishedAt: time => `${time} 발행됨`,
@@ -1284,6 +1303,7 @@
   let selectedId = null;
   let scale = 1;
   let zoom = 1;               // extra magnification on top of "fit the whole board" (touch screens)
+  let flowMode = false, flowWidth = 0;   // narrow screens: the board is a tall "paper" (see layoutFlow)
   let view = 'board';
   let headingSelected = false;   // the board title (not a card) is selected
 
@@ -1483,6 +1503,17 @@
 
   function centerSpot(w, h) {
     const jitter = () => Math.random() * 160 - 80;
+    // on the portrait paper, give the card an empty spot on the wide board so it doesn't pile up there
+    if (flowMode && board) {
+      const margin = 40, step = 60, heading = headingOf(board).hidden ? 0 : 170;
+      const free = (x, y) => board.elements.every(o =>
+        x + w + 24 <= o.x || o.x + o.width + 24 <= x || y + h + 24 <= o.y || o.y + o.height + 24 <= y);
+      for (let y = margin + heading; y + h <= BOARD_H - margin; y += step) {
+        for (let x = margin; x + w <= BOARD_W - margin; x += step) {
+          if (free(x, y)) return { x, y };
+        }
+      }
+    }
     // when zoomed in, new cards land in the middle of what is on screen
     let cx = BOARD_W / 2, cy = BOARD_H / 2;
     if (zoom > 1.001) {
@@ -1689,6 +1720,7 @@
     if (node) {
       node.classList.add('pin-in');
       node.addEventListener('animationend', () => node.classList.remove('pin-in'), { once: true });
+      if (flowMode) node.scrollIntoView({ block: 'center', behavior: 'smooth' });
     }
     return el;
   }
@@ -1748,13 +1780,17 @@
     node.dataset.id = el.id;
     fillNode(node, el);
     node.addEventListener('pointerdown', e => {
+      if (flowMode) return;   // portrait paper: cards are laid out automatically, not dragged
       // On touch, an unselected card lets the finger scroll the board; a tap (click) selects it.
       if (e.pointerType === 'touch' && el.id !== selectedId) return;
       if (e.target.closest('.resize')) startResize(e, el.id);
       else if (e.target.closest('.rotate')) startRotate(e, el.id);
       else startDrag(e, el.id);
     });
-    node.addEventListener('click', () => { if (el.id !== selectedId) select(el.id); });
+    node.addEventListener('click', () => {
+      if (el.id !== selectedId) select(el.id);
+      else if (flowMode) openBoardEdit(el.id);   // second tap on the paper opens the card
+    });
     node.addEventListener('dblclick', () => openBoardEdit(el.id));
     return node;
   }
@@ -1802,6 +1838,7 @@
   function refreshNode(el) {
     const node = nodes.get(el.id);
     if (node) { fillNode(node, el); place(node, el); }
+    if (flowMode) layoutFlow();
   }
 
   /** Shows the floating toolbar just above the selected card (or below it near the top edge). */
@@ -1833,6 +1870,12 @@
    * card toolbar under that. When zoomed in (the board fills the stage) both float at the bottom.
    */
   function layoutPhoneBoard(hasSelection) {
+    selBar.style.left = '';
+    if (flowMode) {                 // the paper scrolls; the toolbar stays docked at the bottom
+      selBar.style.top = 'auto';
+      selBar.style.bottom = '';
+      return;
+    }
     const zoomed = zoom > 1.001;
     const hasCards = !!(board && board.elements.length);
     boardHint.textContent = !hasCards ? '' : hasSelection ? t('hintSelected') : zoomed ? t('hintZoomed') : t('hintTap');
@@ -1883,6 +1926,72 @@
     headingEl.classList.toggle('selected', headingSelected);
     $('toggleHeading').querySelector('b').textContent = t(hd.hidden ? 'showTitle' : 'hideTitle');
     headingEl.querySelector('.resize').title = t('resizeHint');
+    if (flowMode) layoutFlow();   // render() places cards first, then comes here
+  }
+
+  // ================= Portrait paper (narrow screens) =================
+  // The board becomes a tall sheet as wide as the screen. Cards flow down in two columns in reading
+  // order (top to bottom, left to right on the wide board). Each card keeps its shape and is scaled
+  // to the column, so its text stays inside. Saved positions are not changed.
+  const flowNote = document.createElement('p');
+  flowNote.className = 'flow-note';
+  boardEl.appendChild(flowNote);
+
+  function layoutFlow() {
+    if (!board || !flowWidth) return;
+    const W = flowWidth, pad = 16, gap = 16;
+    const cols = W >= 300 ? 2 : 1;
+    const colW = (W - pad * 2 - gap * (cols - 1)) / cols;
+    let top = 16;
+    const hd = headingOf(board);
+    const hasCards = board.elements.length > 0;
+    // an empty paper shows only the "Pin your dreams here" message, so the board title steps aside
+    if (!hasCards) headingEl.hidden = true;
+    if (!hd.hidden && hasCards) {
+      headingEl.style.left = '8px'; headingEl.style.transform = 'none';
+      headingEl.style.top = top + 'px';
+      headingEl.style.fontSize = Math.round(Math.min(34, Math.max(24, hd.size * 0.45))) + 'px';
+      headingEl.style.width = W - 16 + 'px';
+      headingEl.style.whiteSpace = 'normal';
+      top += headingEl.offsetHeight + 6;
+    }
+    flowNote.textContent = hasCards ? t('flowNote') : '';
+    flowNote.style.top = top + 'px';
+    if (hasCards) top += flowNote.offsetHeight + 22;
+
+    const band = el => Math.round((el.y + el.height / 2) / 180);
+    const order = [...board.elements].sort((a, b) => band(a) - band(b) || a.x - b.x);
+    const heights = new Array(cols).fill(top);
+    for (const el of order) {
+      const node = nodes.get(el.id);
+      if (!node) continue;
+      const k = colW / el.width, h = el.height * k;
+      const c = heights.indexOf(Math.min(...heights));
+      const cx = pad + c * (colW + gap) + colW / 2, cy = heights[c] + h / 2;
+      node.style.left = cx - el.width / 2 + 'px';
+      node.style.top = cy - el.height / 2 + 'px';
+      node.style.setProperty('--k', k);
+      node.style.setProperty('--ui', 1 / k);   // keeps the selection outline a steady width
+      heights[c] += h + gap + 12;              // room for the tape on the next card
+    }
+    // always at least a portrait sheet (A4 proportions), longer when the cards need it
+    const H = Math.round(Math.max(Math.max(...heights) + 8, W * 1.414));
+    boardEl.style.height = H + 'px';
+    boardWrap.style.height = H + 'px';
+  }
+
+  function setFlow(on, width) {
+    const changed = on !== flowMode;
+    flowMode = on;
+    flowWidth = on ? width : 0;
+    boardEl.classList.toggle('flow', on);
+    boardScroll.classList.toggle('flow', on);
+    if (on) selBar.dataset.flow = ''; else delete selBar.dataset.flow;
+    if (changed && !on) {                       // back to the wide board: restore saved positions
+      headingEl.style.width = headingEl.style.transform = headingEl.style.whiteSpace = '';
+      for (const node of nodes.values()) { node.style.removeProperty('--k'); node.style.removeProperty('--ui'); }
+      if (board) render();
+    }
   }
 
   function setHeading(patch) {
@@ -1902,6 +2011,7 @@
   });
   headingEl.addEventListener('pointerdown', e => {
     if (e.button !== 0 || headingEditing) return;
+    if (flowMode) return;                                        // the paper title stays put
     if (e.pointerType === 'touch' && !headingSelected) return;   // tap selects, swipe scrolls
     e.preventDefault();
     e.stopPropagation();
@@ -2625,6 +2735,8 @@ ${css}
   .lightbox[hidden] { display: none; }
   .lightbox .el { position: relative; left: auto !important; top: auto !important; flex: none; transform: rotate(0deg) scale(var(--s, 1)); }
   .lightbox .close { color: rgba(250, 249, 245, .85); font-size: 13px; }
+  /* Phones: the board becomes a tall paper, cards flow down in two columns (scaled by --k). */
+  .board.flow .el { transform: rotate(var(--tilt, 0deg)) scale(var(--k, 1)); }
   @media (max-width: 720px) {
     .page { padding: 24px 12px 28px; }
     .masthead { margin-bottom: 18px; }
@@ -2656,22 +2768,75 @@ ${css}
   // Scale the fixed-size board to the page's content width.
   (function () {
     var wrap = document.getElementById('wrap'), board = document.getElementById('board');
-    var box = document.getElementById('lightbox'), s = 1;
+    var box = document.getElementById('lightbox'), s = 1, zoomable = false;
+    var narrow = window.matchMedia('(max-width: 720px)');
+    var head = board.querySelector('.heading');
+    var headStyle = head ? head.getAttribute('style') : '';
+    var cards = [].slice.call(board.querySelectorAll('.el')).map(function (n) {
+      return { n: n, style: n.getAttribute('style'), x: parseFloat(n.style.left), y: parseFloat(n.style.top),
+               w: parseFloat(n.style.width), h: parseFloat(n.style.height) };
+    });
+    // Narrow screens: a tall paper as wide as the page; cards flow down in reading order, each scaled to its column.
+    function flow(W) {
+      board.classList.add('flow');
+      board.style.transform = 'none';
+      board.style.width = W + 'px';
+      var pad = 16, gap = 16, cols = W >= 300 ? 2 : 1, colW = (W - pad * 2 - gap * (cols - 1)) / cols, top = 16;
+      if (head) {
+        head.style.left = '8px'; head.style.transform = 'none';
+        head.style.top = top + 'px';
+        head.style.fontSize = Math.round(Math.min(34, Math.max(24, parseFloat(head.style.fontSize) * 0.45))) + 'px';
+        head.style.width = W - 16 + 'px';
+        head.style.whiteSpace = 'normal';
+        top += head.offsetHeight + 16;
+      }
+      var band = function (c) { return Math.round((c.y + c.h / 2) / 180); };
+      var hs = [];
+      for (var i = 0; i < cols; i++) hs.push(top);
+      cards.slice().sort(function (a, b) { return band(a) - band(b) || a.x - b.x; }).forEach(function (c) {
+        var k = colW / c.w, h = c.h * k, col = hs.indexOf(Math.min.apply(null, hs));
+        var cx = pad + col * (colW + gap) + colW / 2, cy = hs[col] + h / 2;
+        c.n.style.left = cx - c.w / 2 + 'px';
+        c.n.style.top = cy - c.h / 2 + 'px';
+        c.n.style.setProperty('--k', k);
+        hs[col] += h + gap + 12;
+      });
+      var H = Math.round(Math.max(Math.max.apply(null, hs) + 8, W * 1.414));   // at least a portrait sheet
+      board.style.height = H + 'px';
+      wrap.style.width = W + 'px';
+      wrap.style.height = H + 'px';
+    }
+    function unflow() {
+      if (!board.classList.contains('flow')) return;
+      board.classList.remove('flow');
+      board.style.width = '${BOARD_W}px';
+      board.style.height = '${BOARD_H}px';
+      cards.forEach(function (c) { c.n.setAttribute('style', c.style); });
+      if (head) head.setAttribute('style', headStyle);
+    }
     function fit() {
       var page = wrap.parentNode, cs = getComputedStyle(page);
       var width = page.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-      s = Math.min(1, width / ${BOARD_W});
-      board.style.transform = 'scale(' + s + ')';
-      wrap.style.width = ${BOARD_W} * s + 'px';
-      wrap.style.height = ${BOARD_H} * s + 'px';
-      wrap.classList.toggle('zoomable', s < 0.75);
+      if (narrow.matches) {
+        if (head) head.setAttribute('style', headStyle);
+        flow(width);
+        zoomable = true;
+      } else {
+        unflow();
+        s = Math.min(1, width / ${BOARD_W});
+        board.style.transform = 'scale(' + s + ')';
+        wrap.style.width = ${BOARD_W} * s + 'px';
+        wrap.style.height = ${BOARD_H} * s + 'px';
+        zoomable = s < 0.75;
+      }
+      wrap.classList.toggle('zoomable', zoomable);
     }
     window.addEventListener('resize', fit);
     fit();
     // When the board is drawn small, tapping a card shows it large.
     board.addEventListener('click', function (e) {
       var card = e.target.closest('.el');
-      if (!card || s >= 0.75) return;
+      if (!card || !zoomable) return;
       var copy = card.cloneNode(true), w = card.offsetWidth, h = card.offsetHeight;
       var k = Math.min((innerWidth - 40) / w, (innerHeight - 110) / h, 2.2);
       copy.style.zIndex = '';
@@ -2913,6 +3078,21 @@ ${css}
     const padding = narrowMQ.matches ? 12 : 32;
     const r = boardScroll.getBoundingClientRect();
     if (!r.width) return; // stage hidden (Dreams view)
+    if (narrowMQ.matches) {            // portrait paper: as wide as the screen, as tall as its cards
+      const W = Math.round(Math.min(r.width - 24, 560));
+      zoom = 1;
+      scale = 1;
+      boardScroll.classList.remove('zoomed');
+      boardEl.style.transform = 'none';
+      boardEl.style.width = W + 'px';
+      boardEl.style.setProperty('--ui', '1');
+      boardWrap.style.width = W + 'px';
+      setFlow(true, W);
+      layoutFlow();
+      updateToolbar();
+      return;
+    }
+    if (flowMode) setFlow(false, 0);
     if (!touch) zoom = 1;
     // remember the board point at the centre of the view, so zooming keeps it there
     const centre = zoom > 1 || boardScroll.classList.contains('zoomed')
